@@ -1,8 +1,0 @@
-{
-  "owner": "gradle",
-  "name": "actions",
-  "alias": "gradle-actions",
-  "visibility": "internal",
-  "description": "A collection of GitHub Actions to accelerate your Gradle Builds on GitHub",
-  "block_publish": false
-}
