@@ -1,6 +1,6 @@
 # gradle/actions
 
-A collection of GitHub Actions to accelerate your Gradle Builds on GitHub
+A collection of actions for building Gradle projects, as well as generating a dependency graph via Dependency Submission.
 
 Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/gradle/actions](https://github.com/gradle/actions).
 
@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v6.0.1 | [`v6.0.1`](https://github.com/chainguard-actions/gradle-actions/tree/v6.0.1) | — |
+| v6.2.0 | [`v6.2.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.2.0) | [`3f131e8`](https://github.com/gradle/actions/commit/3f131e8634966bd73d06cc69884922b02e6faf92) |
 
 ## Privacy
 
