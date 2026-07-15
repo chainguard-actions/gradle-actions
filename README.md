@@ -8,6 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
+| v6.0.0 | [`v6.0.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.0.0) | [`0f45282`](https://github.com/gradle/actions/commit/0f4528296b4bc09e8ae0fc7be30185a4ab435545) |
 | v6.0.1 | [`v6.0.1`](https://github.com/chainguard-actions/gradle-actions/tree/v6.0.1) | — |
 | v6.1.0 | [`v6.1.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.1.0) | [`50e97c2`](https://github.com/gradle/actions/commit/50e97c2cd7a37755bbfafc9c5b7cafaece252f6e) |
 | v6.1.1 | [`v6.1.1`](https://github.com/chainguard-actions/gradle-actions/tree/v6.1.1) | [`5e2ebd0`](https://github.com/gradle/actions/commit/5e2ebd065dc2488b7a6ad670704656cbbe1e8f60) |
