@@ -141,13 +141,13 @@ jobs:
     - name: Check and delete generated dependency graph
       shell: bash
       env:
-        CONFIG_CACHE_STORE_GRAPH_FILE: ${{ steps.config-cache-store.outputs.dependency-graph-file }}
+        CONFIG_CACHE_GRAPH_FILE: ${{ steps.config-cache-store.outputs.dependency-graph-file }}
       run: |
-        if [ ! -e "$CONFIG_CACHE_STORE_GRAPH_FILE" ]; then
+        if [ ! -e "$CONFIG_CACHE_GRAPH_FILE" ]; then
             echo "Did not find config-cache-store dependency graph files"
             exit 1
         fi
-        rm "$CONFIG_CACHE_STORE_GRAPH_FILE"
+        rm "$CONFIG_CACHE_GRAPH_FILE"
     - id: config-cache-reuse
       run: ./gradlew assemble --configuration-cache
       working-directory: .github/workflow-samples/groovy-dsl

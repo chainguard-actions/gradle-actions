@@ -130,8 +130,8 @@ jobs:
       id: gradle
       working-directory: .github/workflow-samples/no-wrapper${{ matrix.build-root-suffix }}
       env:
-        GRADLE_VERSION_CHECK: ${{ matrix.gradle }}
-      run: gradle help "-DgradleVersionCheck=$GRADLE_VERSION_CHECK"
+        GRADLE_VERSION: ${{ matrix.gradle }}
+      run: gradle help "-DgradleVersionCheck=$GRADLE_VERSION"
     - name: Check Build Scan url
       if: ${{ !steps.gradle.outputs.build-scan-url }}
       uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0

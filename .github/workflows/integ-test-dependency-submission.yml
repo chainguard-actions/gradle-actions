@@ -209,13 +209,13 @@ jobs:
     - name: Check and delete generated dependency graph
       shell: bash
       env:
-        CONFIG_CACHE_STORE_GRAPH_FILE: ${{ steps.config-cache-store.outputs.dependency-graph-file }}
+        CONFIG_CACHE_GRAPH_FILE: ${{ steps.config-cache-store.outputs.dependency-graph-file }}
       run: |
-        if [ ! -e "$CONFIG_CACHE_STORE_GRAPH_FILE" ]; then
+        if [ ! -e "$CONFIG_CACHE_GRAPH_FILE" ]; then
             echo "Did not find config-cache-store dependency graph files"
             exit 1
         fi
-        rm "${CONFIG_CACHE_STORE_GRAPH_FILE}"*
+        rm "$CONFIG_CACHE_GRAPH_FILE"*
     - id: config-cache-reuse
       uses: ./dependency-submission
       with:
@@ -292,13 +292,13 @@ jobs:
     - name: Check and delete generated dependency graph
       shell: bash
       env:
-        DEPENDENCY_SUBMISSION_GRAPH_FILE: ${{ steps.dependency-submission.outputs.dependency-graph-file }}
+        DEPENDENCY_GRAPH_FILE: ${{ steps.dependency-submission.outputs.dependency-graph-file }}
       run: |
-        if [ ! -e "$DEPENDENCY_SUBMISSION_GRAPH_FILE" ]; then
+        if [ ! -e "$DEPENDENCY_GRAPH_FILE" ]; then
             echo "Did not find generated dependency graph files"
             exit 1
         fi
-        rm "${DEPENDENCY_SUBMISSION_GRAPH_FILE}"*
+        rm "$DEPENDENCY_GRAPH_FILE"*
     - name: Run Gradle build
       run: ./gradlew build
       working-directory: .github/workflow-samples/groovy-dsl
@@ -333,9 +333,9 @@ jobs:
     - name: Check generated dependency graph and env vars
       shell: bash
       env:
-        DEPENDENCY_SUBMISSION_GRAPH_FILE: ${{ steps.dependency-submission.outputs.dependency-graph-file }}
+        DEPENDENCY_GRAPH_FILE: ${{ steps.dependency-submission.outputs.dependency-graph-file }}
       run: |
-        if [ ! -e "$DEPENDENCY_SUBMISSION_GRAPH_FILE" ]; then
+        if [ ! -e "$DEPENDENCY_GRAPH_FILE" ]; then
             echo "Did not find generated dependency graph file"
             exit 1
         fi

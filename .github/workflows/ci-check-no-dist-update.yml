@@ -30,9 +30,9 @@ jobs:
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-        while IFS= read -r file; do
-          [ -n "$file" ] && echo "$file was changed"
-        done <<< "$ALL_CHANGED_FILES"
+        for file in "${ALL_CHANGED_FILES}"; do
+          echo "$file was changed"
+        done
 
     - run: |
         echo "The 'dist' directory is automatically updated by the release process."
