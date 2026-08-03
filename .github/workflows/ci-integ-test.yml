@@ -1,0 +1,98 @@
+name: CI-integ-test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+    - 'main'
+    - 'release/**'
+    - 'dev/**' # Allow running tests on dev branches without a PR
+    paths-ignore:
+    - 'dist/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build-distribution:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - name: Build and upload distribution
+      uses: ./.github/actions/build-dist
+
+  smoke-tests:
+    needs: build-distribution
+    uses: ./.github/workflows/suite-smoke-test-caching.yml
+    concurrency:
+      group: CI-smoke-test-caching-${{ github.ref }}
+      cancel-in-progress: false
+    with:
+      skip-dist: false
+      runner-os: '["ubuntu-latest", "windows-latest"]'
+    secrets: inherit
+
+  caching-integ-tests:
+    needs: build-distribution
+    uses: ./.github/workflows/suite-integ-test-caching.yml
+    concurrency:
+      group: CI-integ-test-caching-${{ github.ref }}
+      cancel-in-progress: false
+    with:
+      skip-dist: false
+    secrets: inherit
+
+  other-integ-tests:
+    permissions:
+      contents: write
+    needs: caching-integ-tests
+    uses: ./.github/workflows/suite-integ-test-other.yml
+    concurrency:
+      group: CI-integ-test-other-${{ github.ref }}
+      cancel-in-progress: false
+    with:
+      skip-dist: false
+    secrets: inherit
+
+  dependency-submission-integ-tests:
+    permissions:
+      contents: write
+    needs: other-integ-tests
+    uses: ./.github/workflows/suite-integ-test-dependency-submission.yml
+    concurrency:
+      group: CI-integ-test-dependency-submission-${{ github.ref }}
+      cancel-in-progress: false
+    with:
+      skip-dist: false
+    secrets: inherit
+
+  # Aggregate gate: a single check that succeeds only when all integ-test jobs succeed.
+  # Require this one check in branch protection instead of every fanned-out matrix job.
+  integ-test-success:
+    if: ${{ always() }}
+    needs:
+    - build-distribution
+    - smoke-tests
+    - caching-integ-tests
+    - other-integ-tests
+    - dependency-submission-integ-tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fail if any integ-test job failed or was cancelled
+      if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+      env:
+        RESULT_BUILD_DISTRIBUTION: ${{ needs.build-distribution.result }}
+        RESULT_SMOKE_TESTS: ${{ needs.smoke-tests.result }}
+        RESULT_CACHING_INTEG_TESTS: ${{ needs.caching-integ-tests.result }}
+        RESULT_OTHER_INTEG_TESTS: ${{ needs.other-integ-tests.result }}
+        RESULT_DEPENDENCY_SUBMISSION_INTEG_TESTS: ${{ needs.dependency-submission-integ-tests.result }}
+      run: |
+        echo "One or more integ-test jobs did not succeed:"
+        echo "  build-distribution:                $RESULT_BUILD_DISTRIBUTION"
+        echo "  smoke-tests:                       $RESULT_SMOKE_TESTS"
+        echo "  caching-integ-tests:               $RESULT_CACHING_INTEG_TESTS"
+        echo "  other-integ-tests:                 $RESULT_OTHER_INTEG_TESTS"
+        echo "  dependency-submission-integ-tests: $RESULT_DEPENDENCY_SUBMISSION_INTEG_TESTS"
+        exit 1
