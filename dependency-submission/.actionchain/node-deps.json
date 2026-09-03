@@ -1,0 +1,15 @@
+{
+  "status": "unbundlable",
+  "entries": [
+    {
+      "path": "../dist/dependency-submission/main/index.js",
+      "status": "unbundlable",
+      "reason": "entry path is absolute or escapes the action root"
+    },
+    {
+      "path": "../dist/dependency-submission/post/index.js",
+      "status": "unbundlable",
+      "reason": "entry path is absolute or escapes the action root"
+    }
+  ]
+}
