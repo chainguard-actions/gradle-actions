@@ -1,4 +1,4 @@
-name: Test build-scan inputs
+name: Test basic setup-gradle usage
 on:
   workflow_dispatch:
 jobs:
@@ -9,11 +9,8 @@ jobs:
       - id: setup
         uses: .
         with:
-          build-scan-publish: false
-          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-use-agree: 'yes'
           cache-disabled: true
           validate-wrappers: false
       - name: Assert setup completed
         run: |
-          echo "PASS: setup-gradle completed with build-scan inputs"
+          echo "PASS: setup-gradle completed with basic inputs"

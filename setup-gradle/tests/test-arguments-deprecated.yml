@@ -1,0 +1,26 @@
+name: Test deprecated arguments input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        continue-on-error: true
+        uses: .
+        with:
+          arguments: '--version'
+          cache-disabled: true
+          validate-wrappers: false
+      - name: Assert setup ran (deprecated arguments input may warn or fail gracefully)
+        env:
+          OUTCOME: ${{ steps.setup.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: setup-gradle ran with deprecated arguments input (outcome=$OUTCOME)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

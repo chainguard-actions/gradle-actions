@@ -21,10 +21,10 @@ jobs:
             echo "FAIL: gradle-version output is empty"
             exit 1
           fi
-          echo "PASS: gradle-version output is '$GRADLE_VERSION'"
+          echo "PASS: gradle-version=$GRADLE_VERSION"
       - name: Assert gradle is on PATH
         run: |
-          if ! command -v gradle &>/dev/null; then
+          if ! command -v gradle >/dev/null 2>&1; then
             echo "FAIL: gradle not found on PATH"
             exit 1
           fi

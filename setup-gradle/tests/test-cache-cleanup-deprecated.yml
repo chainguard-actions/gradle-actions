@@ -1,4 +1,4 @@
-name: Test build-scan inputs
+name: Test gradle-home-cache-cleanup deprecated input
 on:
   workflow_dispatch:
 jobs:
@@ -9,11 +9,9 @@ jobs:
       - id: setup
         uses: .
         with:
-          build-scan-publish: false
-          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-use-agree: 'yes'
+          gradle-home-cache-cleanup: true
           cache-disabled: true
           validate-wrappers: false
       - name: Assert setup completed
         run: |
-          echo "PASS: setup-gradle completed with build-scan inputs"
+          echo "PASS: setup-gradle completed with deprecated gradle-home-cache-cleanup input"

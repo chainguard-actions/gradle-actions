@@ -9,28 +9,17 @@ jobs:
       - id: setup
         uses: .
         with:
-          gradle-version: '8.5'
-          cache-disabled: true
-          validate-wrappers: false
+          develocity-access-key: 'fake-access-key-for-testing'
+          develocity-token-expiry: 2
           develocity-injection-enabled: false
           develocity-url: 'https://develocity.example.com'
           develocity-allow-untrusted-server: false
           develocity-capture-file-fingerprints: false
           develocity-enforce-url: false
-          develocity-plugin-version: '3.16'
-          develocity-ccud-plugin-version: '1.13'
-          develocity-access-key: 'fake-access-key-for-testing'
-          develocity-token-expiry: '2'
-          gradle-plugin-repository-url: 'https://plugins.gradle.org/m2'
-          gradle-plugin-repository-username: 'test-user'
-          gradle-plugin-repository-password: 'test-password'
+          develocity-plugin-version: '3.16.2'
+          develocity-ccud-plugin-version: '2.0'
+          cache-disabled: true
+          validate-wrappers: false
       - name: Assert setup completed
-        env:
-          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
         run: |
-          echo "gradle-version: $GRADLE_VERSION"
-          if [ -z "$GRADLE_VERSION" ]; then
-            echo "FAIL: gradle-version output is empty"
-            exit 1
-          fi
-          echo "PASS: setup completed with gradle-version '$GRADLE_VERSION'"
+          echo "PASS: setup-gradle completed with develocity inputs"

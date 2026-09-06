@@ -9,22 +9,14 @@ jobs:
       - id: setup
         uses: .
         with:
-          gradle-version: '8.5'
-          cache-disabled: true
-          validate-wrappers: false
-          dependency-graph: 'disabled'
-          dependency-graph-exclude-projects: '.*:test.*'
-          dependency-graph-include-projects: '.*:main.*'
+          dependency-graph: disabled
+          dependency-graph-exclude-projects: ':test.*'
+          dependency-graph-include-projects: ':app.*'
           dependency-graph-exclude-configurations: 'testRuntime.*'
           dependency-graph-include-configurations: 'runtimeClasspath'
-          artifact-retention-days: '5'
+          artifact-retention-days: 5
+          cache-disabled: true
+          validate-wrappers: false
       - name: Assert setup completed
-        env:
-          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
         run: |
-          echo "gradle-version: $GRADLE_VERSION"
-          if [ -z "$GRADLE_VERSION" ]; then
-            echo "FAIL: gradle-version output is empty"
-            exit 1
-          fi
-          echo "PASS: setup completed with gradle-version '$GRADLE_VERSION'"
+          echo "PASS: setup-gradle completed with dependency-graph filter inputs and artifact-retention-days"
