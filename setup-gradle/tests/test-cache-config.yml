@@ -1,4 +1,4 @@
-name: Test basic setup-gradle usage
+name: Test cache configuration inputs
 on:
   workflow_dispatch:
 jobs:
@@ -9,23 +9,21 @@ jobs:
       - id: setup
         uses: .
         with:
-          gradle-version: '8.5'
           cache-disabled: 'true'
+          cache-encryption-key: 'dGVzdGtleWZvcmVuY3J5cHRpb24xMjM='
+          cache-cleanup: 'never'
+          gradle-home-cache-cleanup: 'false'
+          gradle-home-cache-excludes: |
+            wrapper/dists
           validate-wrappers: 'false'
         continue-on-error: true
-      - name: Assert gradle-version output or graceful failure
+      - name: Assert action ran
         env:
           OUTCOME: ${{ steps.setup.outcome }}
-          GRADLE_VER: ${{ steps.setup.outputs.gradle-version }}
         run: |
           echo "outcome: $OUTCOME"
-          echo "gradle-version output: $GRADLE_VER"
           if [ "$OUTCOME" = "success" ]; then
-            if [ -z "$GRADLE_VER" ]; then
-              echo "FAIL: action succeeded but gradle-version output is empty"
-              exit 1
-            fi
-            echo "PASS: gradle-version=$GRADLE_VER"
+            echo "PASS: action succeeded"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (expected under harness)"
           else

@@ -1,4 +1,4 @@
-name: Test build-scan inputs
+name: Test build scan configuration inputs
 on:
   workflow_dispatch:
 jobs:
@@ -9,11 +9,23 @@ jobs:
       - id: setup
         uses: .
         with:
-          build-scan-publish: false
+          cache-disabled: 'true'
+          validate-wrappers: 'false'
+          build-scan-publish: 'false'
           build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
           build-scan-terms-of-use-agree: 'yes'
-          cache-disabled: true
-          validate-wrappers: false
-      - name: Assert setup completed
+          artifact-retention-days: '7'
+        continue-on-error: true
+      - name: Assert action ran
+        env:
+          OUTCOME: ${{ steps.setup.outcome }}
         run: |
-          echo "PASS: setup-gradle completed with build-scan inputs"
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected under harness)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

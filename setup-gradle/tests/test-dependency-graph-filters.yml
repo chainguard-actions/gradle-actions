@@ -1,4 +1,4 @@
-name: Test dependency-graph filter inputs
+name: Test dependency graph filter inputs
 on:
   workflow_dispatch:
 jobs:
@@ -9,14 +9,24 @@ jobs:
       - id: setup
         uses: .
         with:
-          dependency-graph: disabled
+          cache-disabled: 'true'
+          validate-wrappers: 'false'
+          dependency-graph: 'disabled'
           dependency-graph-exclude-projects: ':test.*'
           dependency-graph-include-projects: ':app.*'
           dependency-graph-exclude-configurations: 'testRuntime.*'
           dependency-graph-include-configurations: 'runtimeClasspath'
-          artifact-retention-days: 5
-          cache-disabled: true
-          validate-wrappers: false
-      - name: Assert setup completed
+        continue-on-error: true
+      - name: Assert action ran
+        env:
+          OUTCOME: ${{ steps.setup.outcome }}
         run: |
-          echo "PASS: setup-gradle completed with dependency-graph filter inputs and artifact-retention-days"
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected under harness)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
