@@ -230,7 +230,6 @@ outputs:
     description: Version of Gradle that was setup by the action
 
 runs:
-  pre: chainguard-phonehome.js
   using: 'node24'
   main: '../dist/dependency-submission/main/index.js'
   post: '../dist/dependency-submission/post/index.js'

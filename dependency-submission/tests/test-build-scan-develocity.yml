@@ -1,4 +1,4 @@
-name: Test dependency graph filter inputs
+name: Test build scan and develocity inputs
 on:
   workflow_dispatch:
 jobs:
@@ -21,10 +21,11 @@ jobs:
         with:
           build-root-directory: test-gradle-project
           gradle-version: '8.5'
-          dependency-graph-exclude-projects: ':test.*'
-          dependency-graph-include-projects: ':.*'
-          dependency-graph-exclude-configurations: 'test.*'
-          dependency-graph-include-configurations: '.*'
+          build-scan-publish: false
+          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
+          build-scan-terms-of-use-agree: 'yes'
+          develocity-access-key: 'fake-access-key-for-testing'
+          develocity-token-expiry: '2'
           dependency-graph: generate-and-upload
           dependency-graph-continue-on-failure: true
           cache-disabled: true

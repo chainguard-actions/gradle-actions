@@ -2,6 +2,7 @@
   "owner": "gradle",
   "repo": "actions",
   "version": "v6.3.0",
+  "path": "dependency-submission",
   "commit_sha": "9c971963bec38e04b3d30dcc455b5382be2fdbfb",
   "url": "https://github.com/gradle/actions",
   "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
