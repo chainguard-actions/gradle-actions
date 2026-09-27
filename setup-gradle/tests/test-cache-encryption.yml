@@ -1,0 +1,25 @@
+name: Test cache encryption and excludes inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Generate encryption key
+        id: keygen
+        run: |
+          KEY=$(openssl rand -base64 16)
+          echo "key=$KEY" >> "$GITHUB_OUTPUT"
+      - id: setup
+        uses: .
+        with:
+          cache-disabled: true
+          cache-encryption-key: ${{ steps.keygen.outputs.key }}
+          gradle-home-cache-excludes: |
+            caches/build-cache-*
+            caches/keyrings
+      - name: Assert setup completed
+        run: |
+          echo "Cache encryption and excludes inputs accepted"
+          echo "PASS"

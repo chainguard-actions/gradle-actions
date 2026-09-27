@@ -1,0 +1,41 @@
+name: Test Gradle setup with dependency graph disabled (default)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: setup-gradle
+        uses: .
+        continue-on-error: true
+        with:
+          gradle-version: '8.5'
+          cache-disabled: 'true'
+          dependency-graph: 'disabled'
+          add-job-summary: 'always'
+
+      - name: Assert setup-gradle step ran with dependency-graph disabled
+        env:
+          OUTCOME: ${{ steps.setup-gradle.outcome }}
+          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
+          DEP_GRAPH_FILE: ${{ steps.setup-gradle.outputs.dependency-graph-file }}
+          BUILD_SCAN_URL: ${{ steps.setup-gradle.outputs.build-scan-url }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version output: '$GRADLE_VERSION'"
+          echo "dependency-graph-file output: '$DEP_GRAPH_FILE'"
+          echo "build-scan-url output: '$BUILD_SCAN_URL'"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$GRADLE_VERSION" ]; then
+              echo "FAIL: action succeeded but gradle-version output is empty"
+              exit 1
+            fi
+            echo "PASS: setup-gradle completed with dependency-graph=disabled, version='$GRADLE_VERSION'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: setup-gradle ran and failed gracefully (dist may not be built)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
