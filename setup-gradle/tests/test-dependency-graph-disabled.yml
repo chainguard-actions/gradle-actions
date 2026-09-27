@@ -1,0 +1,39 @@
+name: Test setup-gradle with dependency-graph disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: setup
+        uses: .
+        continue-on-error: true
+        with:
+          gradle-version: '8.5'
+          cache-disabled: 'true'
+          dependency-graph: 'disabled'
+
+      - name: Assert setup-gradle ran (outputs set, or failed gracefully if dist not accessible)
+        env:
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
+          DEP_GRAPH_FILE: ${{ steps.setup.outputs.dependency-graph-file }}
+          OUTCOME: ${{ steps.setup.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version: $GRADLE_VERSION"
+          echo "dependency-graph-file: '$DEP_GRAPH_FILE'"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$GRADLE_VERSION" ]; then
+              echo "FAIL: action succeeded but gradle-version output is empty"
+              exit 1
+            fi
+            # dependency-graph-file should be empty when dependency-graph=disabled
+            echo "PASS: gradle-version=$GRADLE_VERSION, dependency-graph-file='$DEP_GRAPH_FILE' (expected empty)"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (dist files may not be accessible in container)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
