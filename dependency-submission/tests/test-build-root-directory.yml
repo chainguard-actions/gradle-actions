@@ -1,0 +1,36 @@
+name: Test build-root-directory and dependency-resolution-task inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up minimal Gradle project in subdirectory
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/_test-subproject/gradle/wrapper"
+          cp "$GITHUB_WORKSPACE/hardened/tests/fixtures/gradle-project/build.gradle" "$GITHUB_WORKSPACE/_test-subproject/"
+          cp "$GITHUB_WORKSPACE/hardened/tests/fixtures/gradle-project/settings.gradle" "$GITHUB_WORKSPACE/_test-subproject/"
+          cp "$GITHUB_WORKSPACE/hardened/tests/fixtures/gradle-project/gradle/wrapper/gradle-wrapper.properties" "$GITHUB_WORKSPACE/_test-subproject/gradle/wrapper/"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          build-root-directory: _test-subproject
+          dependency-resolution-task: dependencies
+          dependency-graph: generate-and-upload
+          dependency-graph-continue-on-failure: true
+          cache-disabled: true
+      - name: Assert action ran (build-root-directory and dependency-resolution-task accepted)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected on sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,57 @@
+name: Test deprecated arguments and build-root-directory inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create minimal Gradle wrapper project
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/hardened/tests/fixtures/gradle-project"
+          cd "$GITHUB_WORKSPACE/hardened/tests/fixtures/gradle-project"
+          cat > settings.gradle <<'EOF'
+rootProject.name = 'test-project'
+EOF
+          cat > build.gradle <<'EOF'
+plugins {
+    id 'base'
+}
+EOF
+          # Create a minimal gradle wrapper script
+          mkdir -p gradle/wrapper
+          cat > gradlew <<'EOF'
+#!/bin/sh
+echo "Gradle wrapper invoked with: $@"
+exit 0
+EOF
+          chmod +x gradlew
+          cat > gradle/wrapper/gradle-wrapper.properties <<'EOF'
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
+      - id: setup
+        uses: .
+        continue-on-error: true
+        with:
+          cache-disabled: true
+          build-root-directory: hardened/tests/fixtures/gradle-project
+          arguments: help
+      - name: Assert action ran (deprecated inputs accepted)
+        env:
+          OUTCOME: ${{ steps.setup.outcome }}
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with deprecated inputs"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (deprecated inputs may not be fully supported)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

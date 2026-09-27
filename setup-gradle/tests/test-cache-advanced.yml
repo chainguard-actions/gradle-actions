@@ -1,0 +1,26 @@
+name: Test cache advanced options
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          cache-disabled: true
+          cache-encryption-key: 'dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdA=='
+          gradle-home-cache-excludes: |
+            caches/build-cache-*
+            caches/journal-1
+      - name: Assert gradle-version output is set
+        env:
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
+        run: |
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: gradle-version output is empty"
+            exit 1
+          fi
+          echo "PASS: gradle-version is '$GRADLE_VERSION'"

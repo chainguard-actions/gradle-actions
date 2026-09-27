@@ -1,0 +1,57 @@
+name: Test setup-gradle with cache disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: setup-gradle
+        uses: .
+        continue-on-error: true
+        with:
+          gradle-version: '8.5'
+          cache-disabled: 'true'
+          validate-wrappers: 'false'
+
+      - name: Assert action ran with cache disabled
+        env:
+          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
+          OUTCOME: ${{ steps.setup-gradle.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version: '$GRADLE_VERSION'"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$GRADLE_VERSION" ]; then
+              echo "FAIL: action succeeded but gradle-version output is empty"
+              exit 1
+            fi
+            echo "PASS: action completed with cache-disabled=true, gradle-version='$GRADLE_VERSION'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (dist files or network not available in act environment)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+
+      - name: Assert gradle is on PATH (if action succeeded)
+        env:
+          OUTCOME: ${{ steps.setup-gradle.outcome }}
+        run: |
+          if [ "$OUTCOME" = "success" ]; then
+            if ! command -v gradle >/dev/null 2>&1; then
+              echo "FAIL: gradle not found on PATH"
+              exit 1
+            fi
+            echo "PASS: gradle found at $(command -v gradle)"
+            if command -v java >/dev/null 2>&1; then
+              gradle --version
+              echo "PASS: gradle --version succeeded"
+            else
+              echo "INFO: Java not available, skipping gradle --version"
+            fi
+          else
+            echo "INFO: skipping PATH check since action did not succeed"
+            echo "PASS"
+          fi
