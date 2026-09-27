@@ -1,21 +1,103 @@
-# gradle/actions
+# GitHub Actions for Gradle builds
 
-A collection of actions for building Gradle projects, as well as generating a dependency graph via Dependency Submission.
+This repository contains a set of GitHub Actions that are useful for building Gradle projects on GitHub.
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/gradle/actions](https://github.com/gradle/actions).
+## The `setup-gradle` action
 
-## Versions
+The `setup-gradle` action can be used to configure Gradle for optimal execution on any platform supported by GitHub Actions.
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v3.4.1 | [`v3.4.1`](https://github.com/chainguard-actions/gradle-actions/tree/v3.4.1) | [`31ae356`](https://github.com/gradle/actions/commit/31ae3562f68c96d481c31bc1a8a55cc1be162f83) |
-| v3.5.0 | [`v3.5.0`](https://github.com/chainguard-actions/gradle-actions/tree/v3.5.0) | [`d9c87d4`](https://github.com/gradle/actions/commit/d9c87d481d55275bb5441eef3fe0e46805f9ef70) |
-| v6.0.0 | [`v6.0.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.0.0) | [`0f45282`](https://github.com/gradle/actions/commit/0f4528296b4bc09e8ae0fc7be30185a4ab435545) |
-| v6.0.1 | [`v6.0.1`](https://github.com/chainguard-actions/gradle-actions/tree/v6.0.1) | — |
-| v6.1.0 | [`v6.1.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.1.0) | [`50e97c2`](https://github.com/gradle/actions/commit/50e97c2cd7a37755bbfafc9c5b7cafaece252f6e) |
-| v6.1.1 | [`v6.1.1`](https://github.com/chainguard-actions/gradle-actions/tree/v6.1.1) | [`5e2ebd0`](https://github.com/gradle/actions/commit/5e2ebd065dc2488b7a6ad670704656cbbe1e8f60) |
-| v6.2.0 | [`v6.2.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.2.0) | [`3f131e8`](https://github.com/gradle/actions/commit/3f131e8634966bd73d06cc69884922b02e6faf92) |
-| v6.3.0 | [`v6.3.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.3.0) | — |
+This replaces the previous `gradle/gradle-build-action`, which now delegates to this implementation.
+
+The recommended way to execute any Gradle build is with the help of the [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html), and the examples assume that the Gradle Wrapper has been configured for the project. See [this example](docs/setup-gradle.md#build-with-a-specific-gradle-version) if your project doesn't use the Gradle Wrapper.
+
+### Example usage
+
+```yaml
+name: Build
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: 17
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+    - name: Build with Gradle
+      run: ./gradlew build
+```
+
+See the [full action documentation](docs/setup-gradle.md) for more advanced usage scenarios.
+
+## The `dependency-submission` action
+
+Generates and submits a dependency graph for a Gradle project, allowing GitHub to alert about reported vulnerabilities in your project dependencies.
+
+The following workflow will generate a dependency graph for a Gradle project and submit it immediately to the repository via the
+Dependency Submission API. For most projects, this default configuration should be all that you need.
+
+Simply add this as a new workflow file to your repository (eg `.github/workflows/dependency-submission.yml`).
+
+```yaml
+name: Dependency Submission
+
+on:
+  push:
+    branches: [ 'main' ]
+
+permissions:
+  contents: write
+
+jobs:
+  dependency-submission:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: 17
+    - name: Generate and submit dependency graph
+      uses: gradle/actions/dependency-submission@v3
+```
+
+See the [full action documentation](docs/dependency-submission.md) for more advanced usage scenarios.
+
+## The `wrapper-validation` action
+
+The `wrapper-validation` action validates the checksums of _all_ [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html) JAR files present in the repository and fails if any unknown Gradle Wrapper JAR files are found.
+
+The action should be run in the root of the repository, as it will recursively search for any files named `gradle-wrapper.jar`.
+
+### Example workflow
+
+```yaml
+name: "Validate Gradle Wrapper"
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validation:
+    name: "Validation"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gradle/actions/wrapper-validation@v3
+```
+
+See the [full action documentation](docs/wrapper-validation.md) for more advanced usage scenarios.
 
 ## Privacy
 

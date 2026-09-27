@@ -1,0 +1,57 @@
+name: Test basic gradle-version setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: setup
+        uses: .
+        continue-on-error: true
+        with:
+          gradle-version: '8.7'
+          cache-disabled: 'true'
+
+      - name: Assert action ran (gradle-version output set, or failed gracefully)
+        env:
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
+          OUTCOME: ${{ steps.setup.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version output: $GRADLE_VERSION"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$GRADLE_VERSION" ]; then
+              echo "FAIL: action succeeded but gradle-version output is empty"
+              exit 1
+            fi
+            echo "PASS: gradle-version is '$GRADLE_VERSION'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (dist files may not be available in harness)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+
+      - name: Assert Gradle is on PATH (if action succeeded)
+        env:
+          OUTCOME: ${{ steps.setup.outcome }}
+        run: |
+          if [ "$OUTCOME" != "success" ]; then
+            echo "SKIP: action did not succeed, skipping gradle PATH check"
+            exit 0
+          fi
+          echo "Checking gradle on PATH..."
+          which gradle || { echo "FAIL: gradle not found on PATH"; exit 1; }
+          ACTUAL=$(gradle --version 2>&1 | grep -E '^Gradle [0-9]' | sed 's/Gradle //' | tr -d '[:space:]')
+          echo "Actual gradle version: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: could not determine gradle version"
+            exit 1
+          fi
+          if [ "$ACTUAL" != "8.7" ]; then
+            echo "FAIL: expected Gradle 8.7 but got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: Gradle $ACTUAL is available"

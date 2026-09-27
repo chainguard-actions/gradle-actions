@@ -1,0 +1,29 @@
+name: 'Build and upload distribution'
+# Builds the action distribution an uploads as an artifact for later download
+runs:
+  using: "composite"
+  steps: 
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version: 20
+        cache: npm
+        cache-dependency-path: sources/package-lock.json
+    - name: Build distribution
+      shell: bash
+      run: |
+        npm -v
+        node -v
+        npm install
+        npm run build
+      working-directory: sources
+
+    - name: Copy the generated sources/dist directory to the top-level dist
+      shell: bash
+      run: |
+        cp -r sources/dist .
+
+    - name: Upload distribution
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: dist
+        path: dist/
