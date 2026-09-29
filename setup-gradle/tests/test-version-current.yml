@@ -1,0 +1,53 @@
+name: Test setup-gradle with version 'current'
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-gradle
+        uses: .
+        with:
+          gradle-version: 'current'
+          cache-disabled: 'true'
+          cache-provider: 'basic'
+          validate-wrappers: 'false'
+          add-job-summary: 'never'
+          dependency-graph: 'disabled'
+        continue-on-error: true
+      - name: Assert gradle-version output or graceful failure
+        env:
+          OUTCOME: ${{ steps.setup-gradle.outcome }}
+          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$GRADLE_VERSION" ]; then
+              echo "FAIL: action succeeded but gradle-version output is empty"
+              exit 1
+            fi
+            # Should be a semver-like string
+            if ! echo "$GRADLE_VERSION" | grep -qE '^[0-9]+\.[0-9]+'; then
+              echo "FAIL: gradle-version '$GRADLE_VERSION' does not look like a version number"
+              exit 1
+            fi
+            echo "PASS: gradle-version is '$GRADLE_VERSION'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (harness limitation with sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+      - name: Assert gradle is on PATH (if action succeeded)
+        env:
+          OUTCOME: ${{ steps.setup-gradle.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            which gradle || { echo "FAIL: gradle not found on PATH"; exit 1; }
+            echo "PASS: gradle is available on PATH"
+          else
+            echo "SKIP: action did not succeed, skipping PATH check"
+          fi

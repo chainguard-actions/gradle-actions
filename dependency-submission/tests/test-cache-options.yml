@@ -1,4 +1,4 @@
-name: Test dependency submission with custom dependency resolution task
+name: Test dependency submission with cache options
 on:
   workflow_dispatch:
 jobs:
@@ -17,10 +17,14 @@ jobs:
           build-root-directory: tests/fixtures/gradle-project
           dependency-graph: generate-and-submit
           dependency-graph-continue-on-failure: true
-          cache-disabled: true
-          dependency-resolution-task: 'dependencies'
+          cache-disabled: false
+          cache-encryption-key: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY='
+          gradle-home-cache-cleanup: 'always'
+          gradle-home-cache-excludes: |
+            caches/build-cache-*
+            caches/keyrings
 
-      - name: Assert action ran with custom dependency resolution task
+      - name: Assert action ran with cache options
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}

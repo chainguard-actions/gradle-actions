@@ -1,4 +1,4 @@
-name: Test gradle-plugin-repository inputs
+name: Test Gradle plugin repository inputs
 on:
   workflow_dispatch:
 jobs:
@@ -6,14 +6,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: setup
+      - id: action
         uses: .
         with:
+          cache-disabled: 'true'
           gradle-plugin-repository-url: 'https://plugins.gradle.org/m2'
           gradle-plugin-repository-username: 'test-user'
           gradle-plugin-repository-password: 'test-password'
-          cache-disabled: true
-          validate-wrappers: false
-      - name: Assert setup completed
+      - name: Assert gradle-version output is set
+        env:
+          GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
         run: |
-          echo "PASS: setup-gradle completed with gradle-plugin-repository inputs"
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: gradle-version output is empty"
+            exit 1
+          fi
+          echo "PASS: gradle-version=$GRADLE_VERSION"

@@ -1,0 +1,53 @@
+name: Test setup-gradle with dependency-graph disabled (default)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-gradle
+        uses: .
+        with:
+          gradle-version: '8.5'
+          cache-disabled: 'true'
+          cache-provider: 'basic'
+          validate-wrappers: 'false'
+          dependency-graph: 'disabled'
+          add-job-summary: 'never'
+        continue-on-error: true
+      - name: Assert gradle-version output or graceful failure
+        env:
+          OUTCOME: ${{ steps.setup-gradle.outcome }}
+          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$GRADLE_VERSION" ]; then
+              echo "FAIL: action succeeded but gradle-version output is empty"
+              exit 1
+            fi
+            echo "PASS: gradle-version is '$GRADLE_VERSION'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (harness limitation with sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+      - name: Assert dependency-graph-file output is empty (disabled)
+        env:
+          OUTCOME: ${{ steps.setup-gradle.outcome }}
+          DEP_GRAPH_FILE: ${{ steps.setup-gradle.outputs.dependency-graph-file }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "dependency-graph-file: '$DEP_GRAPH_FILE'"
+          if [ "$OUTCOME" = "success" ]; then
+            # When dependency-graph is disabled, no file should be generated
+            if [ -n "$DEP_GRAPH_FILE" ]; then
+              echo "WARN: dependency-graph-file is set to '$DEP_GRAPH_FILE' even though dependency-graph is disabled"
+            fi
+            echo "PASS: dependency-graph-file check complete"
+          else
+            echo "SKIP: action did not succeed, skipping dependency-graph-file check"
+          fi

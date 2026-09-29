@@ -1,4 +1,4 @@
-name: Test cache encryption and home cache excludes inputs
+name: Test Develocity configuration inputs
 on:
   workflow_dispatch:
 jobs:
@@ -10,9 +10,15 @@ jobs:
         uses: .
         with:
           cache-disabled: 'true'
-          cache-encryption-key: 'dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdA=='
-          gradle-home-cache-excludes: |
-            caches/modules-2/files-2.1/com.example
+          develocity-access-key: 'fake-access-key-for-testing'
+          develocity-token-expiry: '2'
+          develocity-injection-enabled: 'false'
+          develocity-url: 'https://develocity.example.com'
+          develocity-allow-untrusted-server: 'false'
+          develocity-capture-file-fingerprints: 'false'
+          develocity-enforce-url: 'false'
+          develocity-plugin-version: '3.16'
+          develocity-ccud-plugin-version: '1.13'
       - name: Assert gradle-version output is set
         env:
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}

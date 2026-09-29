@@ -6,27 +6,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: setup
+      - id: action
         uses: .
         with:
           cache-disabled: 'true'
-          validate-wrappers: 'false'
           dependency-graph: 'disabled'
-          dependency-graph-exclude-projects: ':test.*'
-          dependency-graph-include-projects: ':app.*'
-          dependency-graph-exclude-configurations: 'testRuntime.*'
+          dependency-graph-exclude-projects: ':test-project'
+          dependency-graph-include-projects: ':main-project'
+          dependency-graph-exclude-configurations: 'testImplementation'
           dependency-graph-include-configurations: 'runtimeClasspath'
-        continue-on-error: true
-      - name: Assert action ran
+      - name: Assert gradle-version output is set
         env:
-          OUTCOME: ${{ steps.setup.outcome }}
+          GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
         run: |
-          echo "outcome: $OUTCOME"
-          if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action succeeded"
-          elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected under harness)"
-          else
-            echo "FAIL: unexpected outcome '$OUTCOME'"
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: gradle-version output is empty"
             exit 1
           fi
+          echo "PASS: gradle-version=$GRADLE_VERSION"

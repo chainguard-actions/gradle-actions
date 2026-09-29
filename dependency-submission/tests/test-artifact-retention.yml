@@ -1,4 +1,4 @@
-name: Test dependency submission with custom dependency resolution task
+name: Test dependency submission with artifact retention days
 on:
   workflow_dispatch:
 jobs:
@@ -15,12 +15,12 @@ jobs:
         with:
           gradle-version: '8.11'
           build-root-directory: tests/fixtures/gradle-project
-          dependency-graph: generate-and-submit
+          dependency-graph: generate-submit-and-upload
           dependency-graph-continue-on-failure: true
           cache-disabled: true
-          dependency-resolution-task: 'dependencies'
+          artifact-retention-days: '7'
 
-      - name: Assert action ran with custom dependency resolution task
+      - name: Assert action ran with artifact retention days
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}

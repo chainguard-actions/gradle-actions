@@ -1,11 +1,9 @@
-name: Test dependency submission with custom dependency resolution task
+name: Test generate-and-upload dependency graph
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -15,18 +13,19 @@ jobs:
         with:
           gradle-version: '8.11'
           build-root-directory: tests/fixtures/gradle-project
-          dependency-graph: generate-and-submit
+          dependency-graph: generate-and-upload
           dependency-graph-continue-on-failure: true
           cache-disabled: true
-          dependency-resolution-task: 'dependencies'
 
-      - name: Assert action ran with custom dependency resolution task
+      - name: Assert action ran (generate-and-upload does not require API submission)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
+          DEP_GRAPH_FILE: ${{ steps.action.outputs.dependency-graph-file }}
         run: |
           echo "outcome: $OUTCOME"
           echo "gradle-version: $GRADLE_VERSION"
+          echo "dependency-graph-file: $DEP_GRAPH_FILE"
           if [ "$OUTCOME" = "success" ]; then
             if [ -z "$GRADLE_VERSION" ]; then
               echo "FAIL: action succeeded but gradle-version output is empty"

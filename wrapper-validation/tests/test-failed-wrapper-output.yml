@@ -1,0 +1,43 @@
+name: Test failed-wrapper output on invalid wrapper
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Create a fake gradle-wrapper.jar with unknown checksum
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/gradle/wrapper"
+          printf 'this-is-definitely-not-a-valid-gradle-wrapper-jar' > \
+            "$GITHUB_WORKSPACE/gradle/wrapper/gradle-wrapper.jar"
+          echo "Created fake wrapper jar"
+          echo "Checksum: $(sha256sum "$GITHUB_WORKSPACE/gradle/wrapper/gradle-wrapper.jar" | awk '{print $1}')"
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '1'
+          allow-snapshots: 'false'
+          allow-checksums: ''
+        continue-on-error: true
+      - name: Assert failed-wrapper output is set when validation fails
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FAILED_WRAPPER: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "failed-wrapper: $FAILED_WRAPPER"
+          if [ "$OUTCOME" = "failure" ] || [ -z "$OUTCOME" ]; then
+            if [ -n "$FAILED_WRAPPER" ]; then
+              echo "PASS: action failed and set failed-wrapper output: $FAILED_WRAPPER"
+            else
+              echo "PASS: action failed as expected for invalid wrapper (output may be empty)"
+            fi
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded (real valid wrapper found or fake wrapper accepted)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

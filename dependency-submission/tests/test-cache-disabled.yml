@@ -1,4 +1,4 @@
-name: Test dependency submission with custom dependency resolution task
+name: Test dependency submission with cache disabled
 on:
   workflow_dispatch:
 jobs:
@@ -18,9 +18,9 @@ jobs:
           dependency-graph: generate-and-submit
           dependency-graph-continue-on-failure: true
           cache-disabled: true
-          dependency-resolution-task: 'dependencies'
+          add-job-summary: 'never'
 
-      - name: Assert action ran with custom dependency resolution task
+      - name: Assert action ran with cache disabled
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
