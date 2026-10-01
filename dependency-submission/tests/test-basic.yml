@@ -1,4 +1,4 @@
-name: Test additional-arguments, dependency-resolution-task, and gradle-home-cache-excludes inputs
+name: Test basic dependency submission
 on:
   workflow_dispatch:
 jobs:
@@ -18,15 +18,11 @@ jobs:
         with:
           gradle-version: '8.5'
           build-root-directory: test-gradle-project
-          dependency-resolution-task: dependencies
-          additional-arguments: --no-configuration-cache --stacktrace
-          gradle-home-cache-excludes: |
-            caches/build-cache-*
           dependency-graph: generate-and-submit
           dependency-graph-continue-on-failure: true
           cache-disabled: true
 
-      - name: Assert action ran (outputs set, or failed gracefully on the sentinel repo)
+      - name: Assert action ran (outputs set, or failed gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}

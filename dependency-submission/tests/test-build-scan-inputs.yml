@@ -1,4 +1,4 @@
-name: Test additional-arguments, dependency-resolution-task, and gradle-home-cache-excludes inputs
+name: Test build-scan and cache-encryption-key inputs
 on:
   workflow_dispatch:
 jobs:
@@ -18,10 +18,12 @@ jobs:
         with:
           gradle-version: '8.5'
           build-root-directory: test-gradle-project
-          dependency-resolution-task: dependencies
-          additional-arguments: --no-configuration-cache --stacktrace
-          gradle-home-cache-excludes: |
-            caches/build-cache-*
+          build-scan-publish: false
+          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
+          build-scan-terms-of-use-agree: 'yes'
+          build-scan-terms-of-service-url: 'https://gradle.com/terms-of-service'
+          build-scan-terms-of-service-agree: 'yes'
+          cache-encryption-key: 'dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdA=='
           dependency-graph: generate-and-submit
           dependency-graph-continue-on-failure: true
           cache-disabled: true

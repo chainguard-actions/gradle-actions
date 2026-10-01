@@ -1,0 +1,49 @@
+name: Test valid gradle wrapper
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a gradle-wrapper.jar with a known checksum and collect pre-existing checksums
+        id: setup
+        run: |
+          mkdir -p gradle/wrapper
+          # Create a fake JAR file with deterministic content
+          printf 'fake-gradle-wrapper-content-valid-test' > gradle/wrapper/gradle-wrapper.jar
+          CHECKSUM=$(sha256sum gradle/wrapper/gradle-wrapper.jar | awk '{print $1}')
+          echo "Wrapper checksum: $CHECKSUM"
+          ls -la gradle/wrapper/gradle-wrapper.jar
+
+          # Also collect checksums of any pre-existing gradle-wrapper.jar files
+          # (excluding the one we just created)
+          ALL_CHECKSUMS="$CHECKSUM"
+          while IFS= read -r -d '' f; do
+            # Skip the file we just created
+            if [ "$f" = "./gradle/wrapper/gradle-wrapper.jar" ]; then
+              continue
+            fi
+            CS=$(sha256sum "$f" | awk '{print $1}')
+            ALL_CHECKSUMS="$ALL_CHECKSUMS,$CS"
+            echo "Found pre-existing wrapper: $f (checksum: $CS)"
+          done < <(find . -name "gradle-wrapper.jar" -print0 2>/dev/null)
+
+          echo "checksum=$CHECKSUM" >> "$GITHUB_OUTPUT"
+          echo "all-checksums=$ALL_CHECKSUMS" >> "$GITHUB_OUTPUT"
+          echo "All checksums: $ALL_CHECKSUMS"
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '1'
+          allow-checksums: ${{ steps.setup.outputs.all-checksums }}
+      - name: Assert no failed wrappers
+        env:
+          FAILED: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "failed-wrapper: '$FAILED'"
+          if [ -n "$FAILED" ]; then
+            echo "FAIL: expected no failed wrappers but got: $FAILED"
+            exit 1
+          fi
+          echo "PASS: wrapper with known checksum passed validation"

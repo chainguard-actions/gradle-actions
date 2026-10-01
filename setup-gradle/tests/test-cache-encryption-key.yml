@@ -1,4 +1,4 @@
-name: Test build scan terms of use inputs
+name: Test cache encryption key input
 on:
   workflow_dispatch:
 jobs:
@@ -10,8 +10,7 @@ jobs:
         uses: .
         with:
           gradle-version: '8.5'
-          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-use-agree: 'yes'
+          cache-encryption-key: 'dGVzdGtleWZvcmVuY3J5cHRpb24xMjM0NQ=='
           cache-disabled: true
       - name: Assert gradle-version output is set
         env:

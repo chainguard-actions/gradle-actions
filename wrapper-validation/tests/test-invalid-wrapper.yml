@@ -1,0 +1,54 @@
+name: Test invalid gradle wrapper detection
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Collect checksums of pre-existing gradle-wrapper.jar files and create invalid one
+        id: setup
+        run: |
+          # First collect checksums of any pre-existing gradle-wrapper.jar files
+          # so we can whitelist them (we only want our fake one to be invalid)
+          PRE_CHECKSUMS=""
+          while IFS= read -r -d '' f; do
+            CS=$(sha256sum "$f" | awk '{print $1}')
+            if [ -n "$PRE_CHECKSUMS" ]; then
+              PRE_CHECKSUMS="$PRE_CHECKSUMS,$CS"
+            else
+              PRE_CHECKSUMS="$CS"
+            fi
+            echo "Found pre-existing wrapper: $f (checksum: $CS)"
+          done < <(find . -name "gradle-wrapper.jar" -print0 2>/dev/null)
+
+          # Now create a fake invalid gradle-wrapper.jar
+          mkdir -p gradle/wrapper
+          printf 'this-is-not-a-valid-gradle-wrapper-jar-content' > gradle/wrapper/gradle-wrapper.jar
+          echo "Created fake invalid gradle-wrapper.jar"
+          sha256sum gradle/wrapper/gradle-wrapper.jar
+
+          echo "pre-checksums=$PRE_CHECKSUMS" >> "$GITHUB_OUTPUT"
+          echo "Pre-existing checksums: $PRE_CHECKSUMS"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          min-wrapper-count: '1'
+          allow-checksums: ${{ steps.setup.outputs.pre-checksums }}
+      - name: Assert action failed and reported the invalid wrapper
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FAILED: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "failed-wrapper: '$FAILED'"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail for invalid wrapper, but outcome was: $OUTCOME"
+            exit 1
+          fi
+          if [ -z "$FAILED" ]; then
+            echo "FAIL: expected failed-wrapper output to be set, but it was empty"
+            exit 1
+          fi
+          echo "PASS: action correctly detected invalid wrapper: $FAILED"

@@ -1,4 +1,4 @@
-name: Test build scan terms of use inputs
+name: Test artifact retention days input
 on:
   workflow_dispatch:
 jobs:
@@ -10,8 +10,7 @@ jobs:
         uses: .
         with:
           gradle-version: '8.5'
-          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-use-agree: 'yes'
+          artifact-retention-days: '7'
           cache-disabled: true
       - name: Assert gradle-version output is set
         env:

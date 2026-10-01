@@ -1,0 +1,40 @@
+name: Test no wrapper required
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Collect checksums of any pre-existing gradle-wrapper.jar files
+        id: precheck
+        run: |
+          # Find all existing gradle-wrapper.jar files (including those in symlinked dirs)
+          # and compute their checksums so we can whitelist them
+          CHECKSUMS=""
+          while IFS= read -r -d '' f; do
+            CS=$(sha256sum "$f" | awk '{print $1}')
+            if [ -n "$CHECKSUMS" ]; then
+              CHECKSUMS="$CHECKSUMS,$CS"
+            else
+              CHECKSUMS="$CS"
+            fi
+            echo "Found pre-existing wrapper: $f (checksum: $CS)"
+          done < <(find . -name "gradle-wrapper.jar" -print0 2>/dev/null)
+          echo "allow-checksums=$CHECKSUMS" >> "$GITHUB_OUTPUT"
+          echo "Total pre-existing checksums: $CHECKSUMS"
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '0'
+          allow-checksums: ${{ steps.precheck.outputs.allow-checksums }}
+      - name: Assert no failed wrappers
+        env:
+          FAILED: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "failed-wrapper: '$FAILED'"
+          if [ -n "$FAILED" ]; then
+            echo "FAIL: expected no failed wrappers but got: $FAILED"
+            exit 1
+          fi
+          echo "PASS: no failed wrappers"

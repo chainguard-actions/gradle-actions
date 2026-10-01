@@ -1,4 +1,4 @@
-name: Test additional-arguments, dependency-resolution-task, and gradle-home-cache-excludes inputs
+name: Test dependency submission with cache disabled
 on:
   workflow_dispatch:
 jobs:
@@ -18,15 +18,12 @@ jobs:
         with:
           gradle-version: '8.5'
           build-root-directory: test-gradle-project
-          dependency-resolution-task: dependencies
-          additional-arguments: --no-configuration-cache --stacktrace
-          gradle-home-cache-excludes: |
-            caches/build-cache-*
-          dependency-graph: generate-and-submit
+          dependency-graph: generate-and-upload
           dependency-graph-continue-on-failure: true
           cache-disabled: true
+          add-job-summary: 'never'
 
-      - name: Assert action ran (outputs set, or failed gracefully on the sentinel repo)
+      - name: Assert action ran with cache disabled
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
@@ -38,9 +35,9 @@ jobs:
               echo "FAIL: action succeeded but gradle-version output is empty"
               exit 1
             fi
-            echo "PASS: action succeeded with gradle-version='$GRADLE_VERSION'"
+            echo "PASS: action succeeded with cache-disabled, gradle-version='$GRADLE_VERSION'"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected with sentinel repo)"
+            echo "PASS: action failed gracefully (sentinel repo or network issue)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

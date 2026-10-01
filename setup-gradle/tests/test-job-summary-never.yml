@@ -1,4 +1,4 @@
-name: Test setup-gradle with cache-read-only
+name: Test setup-gradle with add-job-summary never
 on:
   workflow_dispatch:
 jobs:
@@ -16,7 +16,8 @@ jobs:
         uses: .
         with:
           gradle-version: '8.5'
-          cache-read-only: 'true'
+          cache-disabled: 'true'
+          add-job-summary: 'never'
 
       - name: Assert gradle-version output is set
         env:
@@ -29,7 +30,7 @@ jobs:
           fi
           echo "PASS: gradle-version=$GRADLE_VERSION"
 
-      - name: Assert gradle binary works
+      - name: Run a simple gradle task
         run: |
           gradle --version
-          echo "PASS: gradle --version succeeded with cache-read-only"
+          echo "PASS: gradle --version succeeded with add-job-summary=never"

@@ -7,64 +7,46 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - id: setup-gradle
+      - name: Ensure Java is available
+        run: |
+          java -version 2>&1 || (sudo apt-get update -q && sudo apt-get install -y -q default-jdk)
+          java -version
+
+      - id: setup
         uses: .
-        continue-on-error: true
         with:
           gradle-version: '8.5'
           cache-disabled: 'true'
-          validate-wrappers: 'false'
 
-      - name: Assert gradle-version output is set (if action succeeded)
+      - name: Assert gradle-version output matches requested version
         env:
-          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
-          OUTCOME: ${{ steps.setup-gradle.outcome }}
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
         run: |
-          echo "outcome: $OUTCOME"
-          echo "gradle-version output: '$GRADLE_VERSION'"
-          if [ "$OUTCOME" = "success" ]; then
-            if [ -z "$GRADLE_VERSION" ]; then
-              echo "FAIL: action succeeded but gradle-version output is empty"
-              exit 1
-            fi
-            echo "PASS: gradle-version is '$GRADLE_VERSION'"
-          elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (dist files or network not available in act environment)"
-          else
-            echo "FAIL: unexpected outcome '$OUTCOME'"
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: gradle-version output is empty"
             exit 1
           fi
+          if [ "$GRADLE_VERSION" != "8.5" ]; then
+            echo "FAIL: expected gradle-version '8.5' but got '$GRADLE_VERSION'"
+            exit 1
+          fi
+          echo "PASS: gradle-version=$GRADLE_VERSION"
 
-      - name: Assert gradle version matches requested (if action succeeded)
-        env:
-          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
-          OUTCOME: ${{ steps.setup-gradle.outcome }}
+      - name: Assert gradle binary works
         run: |
-          if [ "$OUTCOME" = "success" ]; then
-            echo "Checking gradle on PATH..."
-            if ! command -v gradle >/dev/null 2>&1; then
-              echo "FAIL: gradle not found on PATH after setup"
-              exit 1
-            fi
-            echo "PASS: gradle found at $(command -v gradle)"
-            if command -v java >/dev/null 2>&1; then
-              ACTUAL_VERSION=$(gradle --version 2>/dev/null | grep '^Gradle ' | awk '{print $2}')
-              echo "Actual gradle version: '$ACTUAL_VERSION'"
-              echo "Expected gradle version: '$GRADLE_VERSION'"
-              if [ -z "$ACTUAL_VERSION" ]; then
-                echo "FAIL: could not determine gradle version from 'gradle --version'"
-                exit 1
-              fi
-              if [ "$ACTUAL_VERSION" != "$GRADLE_VERSION" ]; then
-                echo "FAIL: expected gradle version '$GRADLE_VERSION' but got '$ACTUAL_VERSION'"
-                exit 1
-              fi
-              echo "PASS: gradle $ACTUAL_VERSION is available and matches expected version"
-            else
-              echo "INFO: Java not available, skipping gradle --version check"
-              echo "PASS: gradle is on PATH (version check skipped)"
-            fi
+          echo "Running: gradle --version"
+          gradle --version
+          echo "PASS: gradle --version succeeded"
+
+      - name: Assert gradle version matches via CLI
+        run: |
+          VERSION_OUTPUT=$(gradle --version 2>&1)
+          echo "gradle --version output: $VERSION_OUTPUT"
+          if echo "$VERSION_OUTPUT" | grep -q "Gradle 8.5"; then
+            echo "PASS: gradle CLI reports version 8.5"
           else
-            echo "INFO: skipping version check since action did not succeed"
-            echo "PASS"
+            echo "FAIL: gradle CLI did not report version 8.5"
+            echo "Full output: $VERSION_OUTPUT"
+            exit 1
           fi
