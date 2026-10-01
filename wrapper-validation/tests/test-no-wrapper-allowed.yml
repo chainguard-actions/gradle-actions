@@ -1,0 +1,37 @@
+name: Test no wrapper required (min-wrapper-count=0)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Compute checksums of all gradle-wrapper.jar files in workspace
+        id: compute-checksums
+        run: |
+          echo "Searching for gradle-wrapper.jar files..."
+          find -L "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" -print 2>/dev/null || true
+          CHECKSUMS=$(find -L "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" -exec sha256sum {} \; 2>/dev/null \
+            | awk '{print $1}' | sort -u | tr '\n' ',' | sed 's/,$//')
+          echo "Computed checksums: '$CHECKSUMS'"
+          if [ -z "$CHECKSUMS" ]; then
+            echo "WARNING: no gradle-wrapper.jar files found, using placeholder"
+            CHECKSUMS="0000000000000000000000000000000000000000000000000000000000000000"
+          fi
+          echo "checksums=$CHECKSUMS" >> "$GITHUB_OUTPUT"
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '0'
+          allow-checksums: ${{ steps.compute-checksums.outputs.checksums }}
+          allow-snapshots: 'true'
+      - name: Assert action succeeded with min-wrapper-count=0 and allowed checksums
+        env:
+          FAILED_WRAPPER: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "failed-wrapper: '$FAILED_WRAPPER'"
+          if [ -n "$FAILED_WRAPPER" ]; then
+            echo "FAIL: expected no failed wrappers but got: $FAILED_WRAPPER"
+            exit 1
+          fi
+          echo "PASS: action succeeded with min-wrapper-count=0 and whitelisted checksums"

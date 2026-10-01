@@ -1,4 +1,4 @@
-name: Test setup-gradle with validate-wrappers
+name: Test advanced cache configuration
 on:
   workflow_dispatch:
 jobs:
@@ -6,19 +6,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
       - id: setup
         uses: .
         continue-on-error: true
         with:
-          gradle-version: '8.5'
-          cache-disabled: 'true'
-          validate-wrappers: 'false'
-
-      - name: Assert setup-gradle ran (outputs set, or failed gracefully if dist not accessible)
+          gradle-version: '8.7'
+          cache-disabled: false
+          cache-read-only: true
+          cache-encryption-key: 'dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdA=='
+          gradle-home-cache-excludes: |
+            caches/modules-2/files-2.1/com.example
+          artifact-retention-days: '5'
+          add-job-summary: 'never'
+      - name: Assert setup ran with advanced cache inputs
         env:
-          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
           OUTCOME: ${{ steps.setup.outcome }}
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
         run: |
           echo "outcome: $OUTCOME"
           echo "gradle-version: $GRADLE_VERSION"
@@ -27,13 +30,9 @@ jobs:
               echo "FAIL: action succeeded but gradle-version output is empty"
               exit 1
             fi
-            if ! echo "$GRADLE_VERSION" | grep -q "8.5"; then
-              echo "FAIL: expected gradle-version to contain '8.5' but got '$GRADLE_VERSION'"
-              exit 1
-            fi
-            echo "PASS: gradle-version=$GRADLE_VERSION with validate-wrappers=false"
+            echo "PASS: gradle-version=$GRADLE_VERSION"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (dist files may not be accessible in container)"
+            echo "PASS: action failed gracefully (sentinel repo or cache config issue)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

@@ -1,0 +1,41 @@
+name: Test min-wrapper-count validation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Compute checksums of all gradle-wrapper.jar files in workspace
+        id: compute-checksums
+        run: |
+          echo "Searching for gradle-wrapper.jar files..."
+          find -L "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" -print 2>/dev/null || true
+          COUNT=$(find -L "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" 2>/dev/null | wc -l)
+          echo "Found $COUNT gradle-wrapper.jar file(s)"
+          CHECKSUMS=$(find -L "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" -exec sha256sum {} \; 2>/dev/null \
+            | awk '{print $1}' | sort -u | tr '\n' ',' | sed 's/,$//')
+          echo "Computed checksums: '$CHECKSUMS'"
+          if [ -z "$CHECKSUMS" ]; then
+            CHECKSUMS="0000000000000000000000000000000000000000000000000000000000000000"
+          fi
+          echo "checksums=$CHECKSUMS" >> "$GITHUB_OUTPUT"
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '999'
+          allow-checksums: ${{ steps.compute-checksums.outputs.checksums }}
+          allow-snapshots: 'true'
+        continue-on-error: true
+      - name: Assert action failed due to insufficient wrapper count
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FAILED_WRAPPER: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "failed-wrapper: '$FAILED_WRAPPER'"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail when fewer wrappers found than min-wrapper-count=999, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action correctly failed when wrapper count is below minimum"

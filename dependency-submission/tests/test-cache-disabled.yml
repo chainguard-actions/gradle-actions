@@ -1,4 +1,4 @@
-name: Test basic dependency submission
+name: Test dependency submission with cache disabled
 on:
   workflow_dispatch:
 jobs:
@@ -24,9 +24,12 @@ jobs:
           dependency-graph: generate-and-submit
           dependency-graph-continue-on-failure: true
           cache-disabled: true
+          cache-read-only: false
+          cache-write-only: false
           add-job-summary: never
+          additional-arguments: '--no-configuration-cache'
 
-      - name: Assert action ran (outputs set, or failed gracefully on sentinel repo)
+      - name: Assert action ran with cache disabled
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}

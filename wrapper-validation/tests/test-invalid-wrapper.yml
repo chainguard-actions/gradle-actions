@@ -1,0 +1,35 @@
+name: Test invalid wrapper detection
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify fixture gradle-wrapper.jar exists
+        run: |
+          JAR="$GITHUB_WORKSPACE/tests/fixtures/gradle/wrapper/gradle-wrapper.jar"
+          if [ ! -f "$JAR" ]; then
+            echo "FAIL: fixture gradle-wrapper.jar not found at $JAR"
+            exit 1
+          fi
+          echo "Fixture gradle-wrapper.jar found at $JAR"
+          sha256sum "$JAR"
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '1'
+          allow-snapshots: 'false'
+        continue-on-error: true
+      - name: Assert action failed due to invalid wrapper checksum
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FAILED_WRAPPER: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "failed-wrapper: '$FAILED_WRAPPER'"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail for invalid wrapper but got outcome: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action correctly detected invalid wrapper (outcome=failure)"

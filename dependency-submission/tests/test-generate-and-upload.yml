@@ -1,4 +1,4 @@
-name: Test basic dependency submission
+name: Test generate-and-upload dependency graph
 on:
   workflow_dispatch:
 jobs:
@@ -21,18 +21,20 @@ jobs:
         with:
           gradle-version: '8.7'
           build-root-directory: test-gradle-project
-          dependency-graph: generate-and-submit
+          dependency-graph: generate-and-upload
           dependency-graph-continue-on-failure: true
           cache-disabled: true
           add-job-summary: never
 
-      - name: Assert action ran (outputs set, or failed gracefully on sentinel repo)
+      - name: Assert action ran (generate-and-upload mode)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
+          DEP_GRAPH_FILE: ${{ steps.action.outputs.dependency-graph-file }}
         run: |
           echo "outcome: $OUTCOME"
           echo "gradle-version output: $GRADLE_VERSION"
+          echo "dependency-graph-file output: $DEP_GRAPH_FILE"
           if [ "$OUTCOME" = "success" ]; then
             if [ -z "$GRADLE_VERSION" ]; then
               echo "FAIL: action succeeded but gradle-version output is empty"
@@ -40,7 +42,7 @@ jobs:
             fi
             echo "PASS: action succeeded with gradle-version='$GRADLE_VERSION'"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+            echo "PASS: action failed gracefully (expected in harness environment)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

@@ -1,4 +1,4 @@
-name: Test basic Gradle setup with specific version
+name: Test Gradle setup with wrapper validation disabled
 on:
   workflow_dispatch:
 jobs:
@@ -13,6 +13,7 @@ jobs:
         with:
           gradle-version: '8.7'
           cache-disabled: 'true'
+          validate-wrappers: 'false'
           add-job-summary: 'never'
 
       - name: Assert setup-gradle ran (success or graceful failure)
@@ -31,20 +32,19 @@ jobs:
             exit 1
           fi
 
-      - name: Assert Gradle is on PATH (if setup succeeded)
+      - name: Assert Gradle is available (if setup succeeded)
         env:
           OUTCOME: ${{ steps.setup-gradle.outcome }}
         run: |
           echo "outcome: $OUTCOME"
           if [ "$OUTCOME" = "success" ]; then
             if which gradle > /dev/null 2>&1; then
-              ACTUAL=$(gradle --version 2>&1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
-              echo "actual gradle version: $ACTUAL"
-              echo "PASS: Gradle $ACTUAL is on PATH"
+              gradle --version 2>&1 | head -5 || true
+              echo "PASS: Gradle is available"
             else
-              echo "INFO: gradle not found on PATH (may not be in PATH yet)"
+              echo "INFO: gradle not found on PATH (may be normal in act)"
               echo "PASS: action succeeded regardless"
             fi
           else
-            echo "SKIP: setup did not succeed, skipping PATH check"
+            echo "SKIP: setup did not succeed, skipping Gradle availability check"
           fi

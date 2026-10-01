@@ -16,16 +16,16 @@ Action **gradle--actions/v3.4.1** was hardened automatically. 2 finding(s) were 
 
 ### unpinned-uses (severity: high)
 
-The composite action '.github/actions/build-dist/action.yml' uses mutable version tags instead of pinned full SHA commit digests, making it vulnerable to supply-chain attacks. Failing references: 'uses: actions/setup-node@v4' (line 6) and 'uses: actions/upload-artifact@v4' (line 24).
+The composite action '.github/actions/build-dist/action.yml' references 'actions/setup-node@v4' (line 6) and 'actions/upload-artifact@v4' (line 23) using mutable version tags instead of full 40-character SHA commit digests. These references can be silently updated by the upstream repository, enabling supply-chain attacks.
 
 Locations:
 
 - `.github/actions/build-dist/action.yml:6`
-- `.github/actions/build-dist/action.yml:24`
+- `.github/actions/build-dist/action.yml:23`
 
 ### unpinned-uses (severity: high)
 
-The composite action '.github/actions/init-integ-test/action.yml' uses mutable version tags instead of pinned full SHA commit digests, making it vulnerable to supply-chain attacks. Failing references: 'uses: actions/setup-java@v4' (line 7) and 'uses: actions/download-artifact@v4' (line 15).
+The composite action '.github/actions/init-integ-test/action.yml' references 'actions/setup-java@v4' (line 7) and 'actions/download-artifact@v4' (line 15) using mutable version tags instead of full 40-character SHA commit digests. These references can be silently updated by the upstream repository, enabling supply-chain attacks.
 
 Locations:
 
@@ -40,8 +40,8 @@ Locations:
 
 **Notes:**
 
-Pinned all four unpinned action references to full commit SHAs:
+Pinned all four unpinned action references to full SHA digests:
 - .github/actions/build-dist/action.yml: actions/setup-node@v4 → @49933ea5288caeca8642d1e84afbd3f7d6820020 # v4; actions/upload-artifact@v4 → @ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
 - .github/actions/init-integ-test/action.yml: actions/setup-java@v4 → @cf277c60eb25467037889841efdb72551f06f6c3 # v4; actions/download-artifact@v4 → @d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-Original version tags preserved as inline comments for readability.
+All original version tags preserved as inline comments for readability.
 
