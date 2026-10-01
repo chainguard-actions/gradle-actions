@@ -1,4 +1,4 @@
-name: Test develocity-access-key and develocity-token-expiry inputs
+name: Test deprecated build-scan-terms-of-service-url and build-scan-terms-of-service-agree inputs
 on:
   workflow_dispatch:
 jobs:
@@ -25,8 +25,9 @@ jobs:
         continue-on-error: true
         with:
           build-root-directory: test-project
-          develocity-access-key: 'fake-develocity-key-for-testing'
-          develocity-token-expiry: '4'
+          build-scan-publish: 'true'
+          build-scan-terms-of-service-url: 'https://gradle.com/terms-of-service'
+          build-scan-terms-of-service-agree: 'yes'
           dependency-graph-continue-on-failure: 'true'
           cache-disabled: 'true'
       - name: Assert action ran (outputs set, or failed gracefully on the sentinel repo)

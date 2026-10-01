@@ -6,15 +6,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Create minimal Gradle wrapper project
+      - name: Create minimal Gradle project
         run: |
           mkdir -p "$GITHUB_WORKSPACE/test-project"
-          cd "$GITHUB_WORKSPACE/test-project"
-          cat > settings.gradle << 'EOF'
+          cat > "$GITHUB_WORKSPACE/test-project/settings.gradle" << 'EOF'
           rootProject.name = 'test-project'
           EOF
-          cat > build.gradle << 'EOF'
+          cat > "$GITHUB_WORKSPACE/test-project/build.gradle" << 'EOF'
           plugins {
               id 'java'
           }
@@ -22,20 +20,15 @@ jobs:
               mavenCentral()
           }
           EOF
-
       - id: action
         uses: .
         continue-on-error: true
         with:
           gradle-version: '8.5'
           build-root-directory: test-project
-          additional-arguments: '--no-configuration-cache'
-          gradle-home-cache-excludes: |
-            caches/build-cache-*
           dependency-graph-continue-on-failure: 'true'
           cache-disabled: 'true'
-
-      - name: Assert action ran with gradle-version input
+      - name: Assert action ran (outputs set, or failed gracefully on the sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
@@ -45,7 +38,7 @@ jobs:
           if [ "$OUTCOME" = "success" ]; then
             echo "PASS: action succeeded"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected in harness environment)"
+            echo "PASS: action failed gracefully (expected with sentinel repo)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
