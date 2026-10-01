@@ -1,4 +1,4 @@
-name: Test build scan configuration inputs
+name: Test build scan inputs
 on:
   workflow_dispatch:
 jobs:
@@ -10,12 +10,12 @@ jobs:
         uses: .
         with:
           cache-disabled: true
-          build-scan-publish: false
           build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
           build-scan-terms-of-use-agree: 'yes'
           build-scan-terms-of-service-url: 'https://gradle.com/terms-of-service'
           build-scan-terms-of-service-agree: 'yes'
+          artifact-retention-days: '7'
       - name: Assert setup completed
         run: |
-          echo "Setup Gradle completed successfully"
+          echo "Setup step completed successfully"
           echo "PASS"

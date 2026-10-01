@@ -1,0 +1,49 @@
+name: Test setup-gradle dependency graph generation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Java
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Create minimal Gradle project
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/test-project"
+          cat > "$GITHUB_WORKSPACE/test-project/settings.gradle" << 'EOF'
+          rootProject.name = 'test-project'
+          EOF
+          cat > "$GITHUB_WORKSPACE/test-project/build.gradle" << 'EOF'
+          plugins {
+              id 'java'
+          }
+          repositories {
+              mavenCentral()
+          }
+          EOF
+
+      - id: setup-gradle
+        name: Setup Gradle with dependency graph generation
+        uses: .
+        with:
+          gradle-version: '8.5'
+          cache-disabled: true
+          dependency-graph: 'generate'
+          dependency-graph-continue-on-failure: true
+
+      - name: Assert action completed
+        env:
+          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
+        run: |
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: gradle-version output is empty"
+            exit 1
+          fi
+          echo "PASS: setup-gradle with dependency-graph=generate completed"

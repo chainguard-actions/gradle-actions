@@ -1,0 +1,37 @@
+name: Test - Invalid Wrapper Fails Validation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Debug - list fixture files
+        run: |
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          find "$GITHUB_WORKSPACE" -maxdepth 10 -not -path "*/dist/*" -name "gradle-wrapper.jar" 2>/dev/null || echo "No gradle-wrapper.jar found"
+
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '1'
+          allow-checksums: ''
+        continue-on-error: true
+
+      - name: Assert action failed due to invalid wrapper
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FAILED_WRAPPER: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "failed-wrapper: $FAILED_WRAPPER"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed for invalid/unknown wrapper checksum"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: action should have failed for unknown wrapper checksum"
+            exit 1
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

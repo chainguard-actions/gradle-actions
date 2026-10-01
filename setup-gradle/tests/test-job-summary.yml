@@ -1,4 +1,4 @@
-name: Test setup-gradle with cache read-only
+name: Test setup-gradle job summary configuration
 on:
   workflow_dispatch:
 jobs:
@@ -13,23 +13,24 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - id: setup-gradle
-        name: Setup Gradle with cache-read-only
+      - id: setup-gradle-never
+        name: Setup Gradle with add-job-summary=never
         uses: .
         with:
           gradle-version: '8.5'
-          cache-read-only: true
+          cache-disabled: true
+          add-job-summary: 'never'
 
-      - name: Assert action succeeded with cache-read-only
+      - name: Assert action succeeded with add-job-summary=never
         env:
-          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
+          GRADLE_VERSION: ${{ steps.setup-gradle-never.outputs.gradle-version }}
         run: |
           echo "gradle-version: $GRADLE_VERSION"
           if [ -z "$GRADLE_VERSION" ]; then
             echo "FAIL: gradle-version output is empty"
             exit 1
           fi
-          echo "PASS: setup-gradle with cache-read-only=true completed"
+          echo "PASS: setup-gradle with add-job-summary=never completed"
 
       - name: Verify Gradle is functional
         run: |

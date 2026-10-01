@@ -1,4 +1,4 @@
-name: Test setup-gradle with cache read-only
+name: Test setup-gradle with custom cache includes/excludes
 on:
   workflow_dispatch:
 jobs:
@@ -14,13 +14,18 @@ jobs:
           java-version: '17'
 
       - id: setup-gradle
-        name: Setup Gradle with cache-read-only
+        name: Setup Gradle with custom cache includes/excludes
         uses: .
         with:
           gradle-version: '8.5'
           cache-read-only: true
+          gradle-home-cache-includes: |
+            caches
+            notifications
+          gradle-home-cache-excludes: |
+            caches/build-cache-*
 
-      - name: Assert action succeeded with cache-read-only
+      - name: Assert action succeeded with custom cache configuration
         env:
           GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
         run: |
@@ -29,7 +34,7 @@ jobs:
             echo "FAIL: gradle-version output is empty"
             exit 1
           fi
-          echo "PASS: setup-gradle with cache-read-only=true completed"
+          echo "PASS: setup-gradle with custom cache includes/excludes completed"
 
       - name: Verify Gradle is functional
         run: |

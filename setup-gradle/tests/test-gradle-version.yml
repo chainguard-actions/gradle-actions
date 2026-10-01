@@ -1,0 +1,52 @@
+name: Test setup-gradle with specific version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Java
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - id: setup-gradle
+        name: Setup Gradle with specific version
+        uses: .
+        with:
+          gradle-version: '8.5'
+          cache-disabled: true
+
+      - name: Assert gradle-version output matches requested version
+        env:
+          GRADLE_VERSION: ${{ steps.setup-gradle.outputs.gradle-version }}
+        run: |
+          echo "gradle-version output: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: gradle-version output is empty"
+            exit 1
+          fi
+          if echo "$GRADLE_VERSION" | grep -q "8.5"; then
+            echo "PASS: gradle-version output contains '8.5'"
+          else
+            echo "FAIL: expected gradle-version to contain '8.5', got '$GRADLE_VERSION'"
+            exit 1
+          fi
+
+      - name: Assert Gradle 8.5 is on PATH and functional
+        run: |
+          if ! command -v gradle >/dev/null 2>&1; then
+            echo "FAIL: gradle not found on PATH"
+            exit 1
+          fi
+          VERSION_OUTPUT=$(gradle --version 2>&1)
+          echo "Gradle version output: $VERSION_OUTPUT"
+          if echo "$VERSION_OUTPUT" | grep -q "8.5"; then
+            echo "PASS: Gradle 8.5 is installed and functional"
+          else
+            echo "FAIL: expected Gradle 8.5 but got: $VERSION_OUTPUT"
+            exit 1
+          fi
