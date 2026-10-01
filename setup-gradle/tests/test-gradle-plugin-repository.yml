@@ -1,4 +1,4 @@
-name: Test build scan inputs
+name: Test Gradle plugin repository inputs
 on:
   workflow_dispatch:
 jobs:
@@ -12,11 +12,9 @@ jobs:
         with:
           gradle-version: '8.7'
           cache-disabled: 'true'
-          build-scan-publish: false
-          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-use-agree: 'yes'
-          build-scan-terms-of-service-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-service-agree: 'yes'
+          gradle-plugin-repository-url: 'https://plugins.gradle.org/m2'
+          gradle-plugin-repository-username: 'test-user'
+          gradle-plugin-repository-password: 'test-password'
       - name: Assert action ran
         env:
           OUTCOME: ${{ steps.action.outcome }}
@@ -31,7 +29,7 @@ jobs:
             fi
             echo "PASS: gradle-version=$GRADLE_VERSION"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran (may fail gracefully with build scan inputs)"
+            echo "PASS: action ran (may fail gracefully with plugin repository inputs)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

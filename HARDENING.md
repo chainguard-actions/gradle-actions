@@ -16,21 +16,21 @@ Action **gradle--actions/v3.5.0** was hardened automatically. 2 finding(s) were 
 
 ### unpinned-uses (severity: high)
 
-Composite action steps use mutable version tags (@v4) instead of pinned full-length SHA digests, making the action vulnerable to supply-chain attacks if the referenced tag is moved or overwritten. Failing references: `actions/setup-node@v4` (line 6), `actions/upload-artifact@v4` (line 25).
+The composite action '.github/actions/build-dist/action.yml' references external actions using mutable version tags instead of full 40-character commit SHAs. Failing references: 'actions/setup-node@v4' and 'actions/upload-artifact@v4'. These tags can be moved by the upstream repository, enabling supply-chain attacks.
 
 Locations:
 
 - `.github/actions/build-dist/action.yml:6`
-- `.github/actions/build-dist/action.yml:25`
+- `.github/actions/build-dist/action.yml:22`
 
 ### unpinned-uses (severity: high)
 
-Composite action steps use mutable version tags (@v4) instead of pinned full-length SHA digests, making the action vulnerable to supply-chain attacks if the referenced tag is moved or overwritten. Failing references: `actions/setup-java@v4` (line 7), `actions/download-artifact@v4` (line 15).
+The composite action '.github/actions/init-integ-test/action.yml' references external actions using mutable version tags instead of full 40-character commit SHAs. Failing references: 'actions/setup-java@v4' and 'actions/download-artifact@v4'. These tags can be moved by the upstream repository, enabling supply-chain attacks.
 
 Locations:
 
-- `.github/actions/init-integ-test/action.yml:7`
-- `.github/actions/init-integ-test/action.yml:15`
+- `.github/actions/init-integ-test/action.yml:6`
+- `.github/actions/init-integ-test/action.yml:13`
 
 ## Iteration Notes
 
@@ -41,7 +41,7 @@ Locations:
 **Notes:**
 
 Pinned all four unpinned action references to full commit SHAs:
-- `.github/actions/build-dist/action.yml`: `actions/setup-node@v4` → `@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4`; `actions/upload-artifact@v4` → `@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4`
-- `.github/actions/init-integ-test/action.yml`: `actions/setup-java@v4` → `@cf277c60eb25467037889841efdb72551f06f6c3 # v4`; `actions/download-artifact@v4` → `@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4`
-Original version tags preserved as inline comments for readability.
+- .github/actions/build-dist/action.yml: actions/setup-node@v4 → @49933ea5288caeca8642d1e84afbd3f7d6820020, actions/upload-artifact@v4 → @ea165f8d65b6e75b540449e92b4886f43607fa02
+- .github/actions/init-integ-test/action.yml: actions/setup-java@v4 → @cf277c60eb25467037889841efdb72551f06f6c3, actions/download-artifact@v4 → @d3f86a106a0bac45b974a628896c90dbdf5c8093
+Version tags preserved as inline comments (# v4) for readability.
 

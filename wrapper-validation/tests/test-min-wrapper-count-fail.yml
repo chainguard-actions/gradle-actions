@@ -1,0 +1,28 @@
+name: Test min-wrapper-count failure when fewer wrappers than required
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Show gradle-wrapper.jar count
+        run: |
+          COUNT=$(find "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" | wc -l)
+          echo "Found $COUNT gradle-wrapper.jar file(s)"
+          find "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" -print || true
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '2'
+        continue-on-error: true
+      - name: Assert action failed due to insufficient wrapper count
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail when fewer wrappers found than min-wrapper-count=2, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action correctly failed when fewer gradle-wrapper.jar files found than required"

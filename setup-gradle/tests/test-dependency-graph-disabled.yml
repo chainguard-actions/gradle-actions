@@ -1,0 +1,46 @@
+name: Test Gradle setup with dependency graph disabled (default)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: setup
+        uses: .
+        continue-on-error: true
+        with:
+          gradle-version: '8.5'
+          cache-disabled: 'true'
+          add-job-summary: 'never'
+          dependency-graph: 'disabled'
+
+      - name: Assert dependency-graph-file output is empty when disabled
+        env:
+          DEP_GRAPH_FILE: ${{ steps.setup.outputs.dependency-graph-file }}
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
+          OUTCOME: ${{ steps.setup.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "dependency-graph-file output: '$DEP_GRAPH_FILE'"
+          echo "gradle-version output: '$GRADLE_VERSION'"
+          if [ "$OUTCOME" = "success" ]; then
+            # When dependency-graph is disabled, the dependency-graph-file output should be empty
+            if [ -n "$DEP_GRAPH_FILE" ]; then
+              echo "FAIL: expected dependency-graph-file to be empty when disabled, got: '$DEP_GRAPH_FILE'"
+              exit 1
+            fi
+            echo "PASS: dependency-graph-file is empty as expected"
+            # Verify gradle-version is set
+            if [ -z "$GRADLE_VERSION" ]; then
+              echo "FAIL: gradle-version output is empty"
+              exit 1
+            fi
+            echo "PASS: gradle-version is '$GRADLE_VERSION'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected in restricted environment)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

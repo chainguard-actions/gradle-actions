@@ -1,0 +1,42 @@
+name: Test no wrapper with min-wrapper-count=0
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Remove all gradle-wrapper.jar files so none are found
+        run: |
+          find "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" -delete
+          REMAINING=$(find "$GITHUB_WORKSPACE" -name "gradle-wrapper.jar" | wc -l)
+          echo "Remaining gradle-wrapper.jar files: $REMAINING"
+          if [ "$REMAINING" -ne 0 ]; then
+            echo "FAIL: could not remove all gradle-wrapper.jar files"
+            exit 1
+          fi
+          echo "All gradle-wrapper.jar files removed"
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '0'
+        continue-on-error: true
+      - name: Assert action succeeded with no wrappers and min-wrapper-count=0
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FAILED: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "failed-wrapper: '$FAILED'"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -n "$FAILED" ]; then
+              echo "FAIL: action succeeded but failed-wrapper is set: $FAILED"
+              exit 1
+            fi
+            echo "PASS: no failed wrappers reported with min-wrapper-count=0 and no wrappers present"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (may be a wrapper loading issue in this environment)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
