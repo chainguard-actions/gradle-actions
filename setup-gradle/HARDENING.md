@@ -1,6 +1,6 @@
 <!-- markdownlint-disable -->
 
-# Hardening Report: gradle--actions/v6.1.0
+# Hardening Report: gradle--actions--setup-gradle/v6.1.0
 
 > This file was generated automatically by the hardening agent.
 
@@ -10,5 +10,5 @@
 
 **Harden Agent Version:** `2`
 
-Action **gradle--actions/v6.1.0** was hardened automatically. 0 finding(s) were identified and resolved across 0 iteration(s).
+Action **gradle--actions--setup-gradle/v6.1.0** was hardened automatically. 0 finding(s) were identified and resolved across 0 iteration(s).
 
