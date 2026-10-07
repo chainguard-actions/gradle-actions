@@ -19,6 +19,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v6.1.1 | [`v6.1.1`](https://github.com/chainguard-actions/gradle-actions/tree/v6.1.1) | [`5e2ebd0`](https://github.com/gradle/actions/commit/5e2ebd065dc2488b7a6ad670704656cbbe1e8f60) |
 | v6.2.0 | [`v6.2.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.2.0) | [`3f131e8`](https://github.com/gradle/actions/commit/3f131e8634966bd73d06cc69884922b02e6faf92) |
 | v6.3.0 | [`v6.3.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.3.0) | [`9c97196`](https://github.com/gradle/actions/commit/9c971963bec38e04b3d30dcc455b5382be2fdbfb) |
+| v6.4.0 | [`v6.4.0`](https://github.com/chainguard-actions/gradle-actions/tree/v6.4.0) | [`3f5f9ad`](https://github.com/gradle/actions/commit/3f5f9adaf7d9fecd50b5935e54106014257a94e6) |
 
 ## Privacy
 
