@@ -1,0 +1,40 @@
+name: Test multiple wrappers with min-wrapper-count=2
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify committed fixture wrappers exist
+        run: |
+          COUNT=$(find tests/fixtures -name "gradle-wrapper.jar" | wc -l)
+          echo "Found $COUNT gradle-wrapper.jar files in fixtures"
+          find tests/fixtures -name "gradle-wrapper.jar" -exec sha256sum {} \;
+          if [ "$COUNT" -lt 2 ]; then
+            echo "FAIL: expected at least 2 fixture gradle-wrapper.jar files, found $COUNT"
+            exit 1
+          fi
+          echo "Confirmed: at least 2 fixture wrapper files present"
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '2'
+          # SHA256 of an empty file - matches all committed empty gradle-wrapper.jar fixtures
+          allow-checksums: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      - name: Assert action succeeded with multiple valid wrappers
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FAILED: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "failed-wrapper: '$FAILED'"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed with multiple valid wrappers, but got: $OUTCOME"
+            exit 1
+          fi
+          if [ -n "$FAILED" ]; then
+            echo "FAIL: expected no failed-wrapper output but got: $FAILED"
+            exit 1
+          fi
+          echo "PASS: action succeeded with multiple valid wrappers"

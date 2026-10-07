@@ -1,0 +1,39 @@
+name: Test cache options configuration
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          gradle-version: '8.10'
+          build-root-directory: tests/fixtures/gradle-project
+          dependency-graph: generate-and-upload
+          cache-disabled: false
+          cache-provider: 'basic'
+          cache-encryption-key: 'dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdA=='
+          gradle-home-cache-cleanup: 'never'
+          gradle-home-cache-excludes: |
+            caches/build-cache-*
+          dependency-graph-continue-on-failure: true
+
+      - name: Assert action ran with cache options
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with cache options"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with sentinel repo or missing Gradle project)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,28 @@
+name: Test dependency graph filter inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          gradle-version: '8.10'
+          cache-disabled: true
+          dependency-graph: 'disabled'
+          dependency-graph-exclude-projects: ':test.*'
+          dependency-graph-include-projects: ':app.*'
+          dependency-graph-exclude-configurations: 'testImplementation'
+          dependency-graph-include-configurations: 'runtimeClasspath'
+      - name: Assert gradle-version output is set
+        env:
+          GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
+        run: |
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: expected gradle-version output to be set"
+            exit 1
+          fi
+          echo "PASS"

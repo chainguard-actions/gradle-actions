@@ -1,0 +1,39 @@
+name: Test allow-snapshots input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify committed fixture wrapper exists
+        run: |
+          if [ ! -f "tests/fixtures/gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "FAIL: fixture gradle-wrapper.jar not found"
+            exit 1
+          fi
+          echo "Fixture gradle-wrapper.jar found"
+          sha256sum tests/fixtures/gradle/wrapper/gradle-wrapper.jar
+      - id: action
+        uses: .
+        with:
+          min-wrapper-count: '1'
+          allow-snapshots: 'true'
+          # SHA256 of an empty file - matches the committed empty gradle-wrapper.jar fixtures
+          allow-checksums: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      - name: Assert action succeeded with allow-snapshots=true
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          FAILED: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "failed-wrapper: '$FAILED'"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed with allow-snapshots=true and valid checksum, but got: $OUTCOME"
+            exit 1
+          fi
+          if [ -n "$FAILED" ]; then
+            echo "FAIL: expected no failed-wrapper output but got: $FAILED"
+            exit 1
+          fi
+          echo "PASS: action succeeded with allow-snapshots=true"
