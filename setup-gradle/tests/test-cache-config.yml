@@ -1,0 +1,36 @@
+name: Test cache configuration inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          gradle-version: '8.5'
+          cache-provider: 'basic'
+          cache-disabled: false
+          cache-read-only: true
+          cache-write-only: false
+          cache-overwrite-existing: false
+          cache-encryption-key: 'dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdA=='
+          cache-cleanup: 'never'
+          gradle-home-cache-cleanup: 'false'
+          gradle-home-cache-includes: |
+            caches
+            notifications
+          gradle-home-cache-excludes: 'wrapper/dists'
+          add-job-summary: 'never'
+          validate-wrappers: false
+      - name: Assert setup completed
+        env:
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
+        run: |
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: expected gradle-version output to be set"
+            exit 1
+          fi
+          echo "PASS: setup completed with cache configuration"

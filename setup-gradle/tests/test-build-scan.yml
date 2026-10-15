@@ -1,0 +1,29 @@
+name: Test build scan configuration inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          gradle-version: '8.5'
+          cache-disabled: true
+          build-scan-publish: false
+          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
+          build-scan-terms-of-use-agree: 'yes'
+          add-job-summary: 'never'
+          add-job-summary-as-pr-comment: 'never'
+          validate-wrappers: false
+      - name: Assert setup completed
+        env:
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
+        run: |
+          echo "gradle-version: $GRADLE_VERSION"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "FAIL: expected gradle-version output to be set"
+            exit 1
+          fi
+          echo "PASS: setup completed with build scan configuration"
