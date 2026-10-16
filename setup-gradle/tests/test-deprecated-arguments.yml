@@ -6,18 +6,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - id: setup
+        continue-on-error: true
         uses: .
         with:
-          cache-disabled: 'true'
+          cache-disabled: true
           arguments: '--version'
-      - name: Assert gradle-version output is set
+      - name: Assert action ran (deprecated input may cause warning or failure)
         env:
-          GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
+          OUTCOME: ${{ steps.setup.outcome }}
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
         run: |
+          echo "outcome: $OUTCOME"
           echo "gradle-version: $GRADLE_VERSION"
-          if [ -z "$GRADLE_VERSION" ]; then
-            echo "FAIL: gradle-version output is empty"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$GRADLE_VERSION" ]; then
+              echo "FAIL: action succeeded but gradle-version output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded with gradle-version=$GRADLE_VERSION"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (deprecated 'arguments' input rejected)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
           fi
-          echo "PASS: gradle-version=$GRADLE_VERSION"

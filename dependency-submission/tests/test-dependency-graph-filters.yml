@@ -19,7 +19,7 @@ jobs:
           dependency-graph-continue-on-failure: true
           cache-disabled: true
           dependency-graph-exclude-projects: ':test-project'
-          dependency-graph-include-projects: ':main-project'
+          dependency-graph-include-projects: ':app'
           dependency-graph-exclude-configurations: 'testRuntimeClasspath'
           dependency-graph-include-configurations: 'runtimeClasspath'
 

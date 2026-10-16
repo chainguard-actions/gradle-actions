@@ -6,22 +6,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - id: setup
         uses: .
         with:
-          cache-disabled: 'true'
-          develocity-access-key: 'fake-access-key-for-testing'
-          develocity-token-expiry: '2'
-          develocity-injection-enabled: 'false'
+          cache-disabled: true
+          develocity-injection-enabled: false
           develocity-url: 'https://develocity.example.com'
-          develocity-allow-untrusted-server: 'false'
-          develocity-capture-file-fingerprints: 'false'
-          develocity-enforce-url: 'false'
-          develocity-plugin-version: '3.16'
+          develocity-allow-untrusted-server: false
+          develocity-capture-file-fingerprints: false
+          develocity-enforce-url: false
+          develocity-plugin-version: '3.16.2'
           develocity-ccud-plugin-version: '1.13'
+          develocity-access-key: ''
+          develocity-token-expiry: 2
       - name: Assert gradle-version output is set
         env:
-          GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
         run: |
           echo "gradle-version: $GRADLE_VERSION"
           if [ -z "$GRADLE_VERSION" ]; then

@@ -1,4 +1,4 @@
-name: Test cache cleanup inputs
+name: Test advanced cache configuration inputs
 on:
   workflow_dispatch:
 jobs:
@@ -6,14 +6,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - id: setup
         uses: .
         with:
-          cache-disabled: 'true'
-          gradle-home-cache-cleanup: 'true'
+          cache-disabled: true
+          cache-encryption-key: 'dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdA=='
+          gradle-home-cache-excludes: |
+            caches/build-cache-*
+          gradle-home-cache-cleanup: 'never'
       - name: Assert gradle-version output is set
         env:
-          GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
         run: |
           echo "gradle-version: $GRADLE_VERSION"
           if [ -z "$GRADLE_VERSION" ]; then

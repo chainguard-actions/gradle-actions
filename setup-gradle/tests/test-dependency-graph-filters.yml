@@ -6,18 +6,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - id: setup
         uses: .
         with:
-          cache-disabled: 'true'
-          dependency-graph: 'disabled'
-          dependency-graph-exclude-projects: ':test-project'
-          dependency-graph-include-projects: ':main-project'
-          dependency-graph-exclude-configurations: 'testImplementation'
+          cache-disabled: true
+          dependency-graph: disabled
+          dependency-graph-exclude-projects: ':test.*'
+          dependency-graph-include-projects: ':app.*'
+          dependency-graph-exclude-configurations: 'testRuntime.*'
           dependency-graph-include-configurations: 'runtimeClasspath'
       - name: Assert gradle-version output is set
         env:
-          GRADLE_VERSION: ${{ steps.action.outputs.gradle-version }}
+          GRADLE_VERSION: ${{ steps.setup.outputs.gradle-version }}
         run: |
           echo "gradle-version: $GRADLE_VERSION"
           if [ -z "$GRADLE_VERSION" ]; then
