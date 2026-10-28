@@ -1,0 +1,59 @@
+name: Test build scan terms without publishing
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure a JDK is available
+        run: |
+          if command -v java >/dev/null 2>&1; then
+            java -version
+            exit 0
+          fi
+          case "$(uname -m)" in
+            x86_64|amd64) ARCH=x64 ;;
+            aarch64|arm64) ARCH=aarch64 ;;
+            *) echo "unsupported arch $(uname -m)"; exit 1 ;;
+          esac
+          mkdir -p /tmp/jdk
+          curl -sSfL "https://api.adoptium.net/v3/binary/latest/17/ga/linux/${ARCH}/jdk/hotspot/normal/eclipse" -o /tmp/jdk.tar.gz
+          tar -xzf /tmp/jdk.tar.gz -C /tmp/jdk --strip-components=1
+          echo "JAVA_HOME=/tmp/jdk" >> "$GITHUB_ENV"
+          echo "/tmp/jdk/bin" >> "$GITHUB_PATH"
+          /tmp/jdk/bin/java -version
+      - id: action
+        uses: .
+        with:
+          gradle-version: '8.10.2'
+          build-root-directory: tests/fixtures/gradle-project
+          dependency-graph: generate-and-submit
+          dependency-graph-continue-on-failure: 'true'
+          dependency-graph-report-dir: dg-reports-scan
+          build-scan-publish: 'false'
+          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
+          build-scan-terms-of-use-agree: 'yes'
+          develocity-access-key: ''
+          develocity-token-expiry: '2'
+          cache-disabled: 'true'
+          add-job-summary: never
+      - name: Assert graph generated and no build scan published
+        env:
+          SCAN_URL: ${{ steps.action.outputs.build-scan-url }}
+        run: |
+          echo "build-scan-url: $SCAN_URL"
+          if [ -n "$SCAN_URL" ]; then
+            echo "FAIL: no build scan should be published when build-scan-publish is false"
+            exit 1
+          fi
+          FILE="$(find "$GITHUB_WORKSPACE/dg-reports-scan" -name '*.json' 2>/dev/null | head -n1)"
+          if [ -z "$FILE" ]; then
+            echo "FAIL: no dependency graph JSON generated"
+            exit 1
+          fi
+          if ! grep -q 'commons-lang3' "$FILE"; then
+            echo "FAIL: graph does not mention commons-lang3"
+            exit 1
+          fi
+          echo "PASS"

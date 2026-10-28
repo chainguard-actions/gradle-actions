@@ -1,0 +1,66 @@
+name: Test dependency graph filters
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install a JDK (setup-gradle requires java on PATH)
+        run: |
+          set -e
+          if command -v java >/dev/null 2>&1; then
+            echo "java already present"; java -version; exit 0
+          fi
+          case "$(uname -m)" in
+            x86_64|amd64) ARCH=x64 ;;
+            aarch64|arm64) ARCH=aarch64 ;;
+            *) echo "unsupported arch $(uname -m)"; exit 1 ;;
+          esac
+          DEST="$RUNNER_TEMP/jdk17"
+          mkdir -p "$DEST"
+          curl -fsSL -o "$RUNNER_TEMP/jdk.tar.gz" \
+            "https://api.adoptium.net/v3/binary/latest/17/ga/linux/${ARCH}/jdk/hotspot/normal/eclipse"
+          tar -xzf "$RUNNER_TEMP/jdk.tar.gz" -C "$DEST" --strip-components=1
+          "$DEST/bin/java" -version
+          echo "JAVA_HOME=$DEST" >> "$GITHUB_ENV"
+          echo "$DEST/bin" >> "$GITHUB_PATH"
+      - id: action
+        uses: .
+        with:
+          gradle-version: '8.5'
+          cache-disabled: 'true'
+          validate-wrappers: 'false'
+          add-job-summary: never
+          dependency-graph: generate
+          dependency-graph-continue-on-failure: 'true'
+          dependency-graph-include-projects: ':app.*'
+          dependency-graph-exclude-projects: ':test-fixtures'
+          dependency-graph-include-configurations: 'runtimeClasspath'
+          dependency-graph-exclude-configurations: 'test.*'
+          artifact-retention-days: '1'
+      - name: Assert gradle-version output
+        env:
+          ACTUAL: ${{ steps.action.outputs.gradle-version }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "8.5" ]; then
+            echo "FAIL: expected '8.5'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert dependency graph filter env vars exported
+        run: |
+          echo "GITHUB_DEPENDENCY_GRAPH_ENABLED=$GITHUB_DEPENDENCY_GRAPH_ENABLED"
+          echo "DEPENDENCY_GRAPH_INCLUDE_PROJECTS=$DEPENDENCY_GRAPH_INCLUDE_PROJECTS"
+          echo "DEPENDENCY_GRAPH_EXCLUDE_PROJECTS=$DEPENDENCY_GRAPH_EXCLUDE_PROJECTS"
+          echo "DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS=$DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS"
+          echo "DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS=$DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS"
+          FAILED=0
+          [ "$GITHUB_DEPENDENCY_GRAPH_ENABLED" = "true" ] || { echo "FAIL: graph not enabled"; FAILED=1; }
+          [ "$DEPENDENCY_GRAPH_INCLUDE_PROJECTS" = ":app.*" ] || { echo "FAIL: include projects"; FAILED=1; }
+          [ "$DEPENDENCY_GRAPH_EXCLUDE_PROJECTS" = ":test-fixtures" ] || { echo "FAIL: exclude projects"; FAILED=1; }
+          [ "$DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS" = "runtimeClasspath" ] || { echo "FAIL: include configurations"; FAILED=1; }
+          [ "$DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS" = "test.*" ] || { echo "FAIL: exclude configurations"; FAILED=1; }
+          if [ "$FAILED" -ne 0 ]; then exit 1; fi
+          echo "PASS"

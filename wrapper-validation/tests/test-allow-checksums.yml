@@ -1,0 +1,35 @@
+name: Test allow-checksums accepts user-defined checksums
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a custom jar and compute allowed checksums
+        id: setup
+        run: |
+          rm -rf "$GITHUB_WORKSPACE"/acttest-*
+          mkdir -p "$GITHUB_WORKSPACE/acttest-custom/gradle/wrapper"
+          echo "custom user-defined wrapper content" > "$GITHUB_WORKSPACE/acttest-custom/gradle/wrapper/gradle-wrapper.jar"
+          cd "$GITHUB_WORKSPACE"
+          SUMS=$(find . -name gradle-wrapper.jar -type f -not -path './.git/*' -exec sha256sum {} \; | awk '{print $1}' | sort -u | paste -sd, -)
+          echo "checksums: $SUMS"
+          echo "sums=$SUMS" >> "$GITHUB_OUTPUT"
+      - id: action
+        uses: .
+        with:
+          allow-checksums: ${{ steps.setup.outputs.sums }}
+      - name: Assert no failed wrapper reported
+        env:
+          FAILED: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "failed-wrapper: '$FAILED'"
+          if [ -n "$FAILED" ]; then
+            echo "FAIL: expected no failed wrappers"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Cleanup
+        if: always()
+        run: rm -rf "$GITHUB_WORKSPACE"/acttest-*

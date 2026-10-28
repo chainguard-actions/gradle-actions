@@ -1,0 +1,60 @@
+name: Test build scan publish with terms of use
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install a JDK (setup-gradle requires java on PATH)
+        run: |
+          set -e
+          if command -v java >/dev/null 2>&1; then
+            echo "java already present"; java -version; exit 0
+          fi
+          case "$(uname -m)" in
+            x86_64|amd64) ARCH=x64 ;;
+            aarch64|arm64) ARCH=aarch64 ;;
+            *) echo "unsupported arch $(uname -m)"; exit 1 ;;
+          esac
+          DEST="$RUNNER_TEMP/jdk17"
+          mkdir -p "$DEST"
+          curl -fsSL -o "$RUNNER_TEMP/jdk.tar.gz" \
+            "https://api.adoptium.net/v3/binary/latest/17/ga/linux/${ARCH}/jdk/hotspot/normal/eclipse"
+          tar -xzf "$RUNNER_TEMP/jdk.tar.gz" -C "$DEST" --strip-components=1
+          "$DEST/bin/java" -version
+          echo "JAVA_HOME=$DEST" >> "$GITHUB_ENV"
+          echo "$DEST/bin" >> "$GITHUB_PATH"
+      - id: action
+        uses: .
+        with:
+          gradle-version: '8.5'
+          cache-disabled: 'true'
+          validate-wrappers: 'false'
+          add-job-summary: never
+          build-scan-publish: 'true'
+          build-scan-terms-of-use-url: 'https://gradle.com/help/legal-terms-of-use'
+          build-scan-terms-of-use-agree: 'yes'
+      - name: Assert gradle-version output
+        env:
+          ACTUAL: ${{ steps.action.outputs.gradle-version }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "8.5" ]; then
+            echo "FAIL: expected '8.5'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert build scan publishing enabled Develocity injection
+        run: |
+          echo "DEVELOCITY_INJECTION_ENABLED=$DEVELOCITY_INJECTION_ENABLED"
+          echo "DEVELOCITY_PLUGIN_VERSION=$DEVELOCITY_PLUGIN_VERSION"
+          if [ "$DEVELOCITY_INJECTION_ENABLED" != "true" ]; then
+            echo "FAIL: expected DEVELOCITY_INJECTION_ENABLED=true"
+            exit 1
+          fi
+          if [ -z "$DEVELOCITY_PLUGIN_VERSION" ]; then
+            echo "FAIL: expected DEVELOCITY_PLUGIN_VERSION to be set"
+            exit 1
+          fi
+          echo "PASS"

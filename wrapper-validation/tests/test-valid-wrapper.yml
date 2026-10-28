@@ -1,0 +1,39 @@
+name: Test genuine Gradle wrapper jar passes validation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Allow pre-existing jars, then add a genuine wrapper jar
+        id: setup
+        run: |
+          rm -rf "$GITHUB_WORKSPACE"/acttest-*
+          cd "$GITHUB_WORKSPACE"
+          # Allow any jars already in the repository (e.g. test data) so only
+          # the downloaded genuine jar relies on real checksum verification.
+          SUMS=$(find . -name gradle-wrapper.jar -type f -not -path './.git/*' -exec sha256sum {} \; | awk '{print $1}' | sort -u | paste -sd, -)
+          echo "pre-existing checksums: $SUMS"
+          echo "sums=$SUMS" >> "$GITHUB_OUTPUT"
+          mkdir -p acttest-valid/gradle/wrapper
+          curl -fsSL -o acttest-valid/gradle/wrapper/gradle-wrapper.jar \
+            https://raw.githubusercontent.com/gradle/gradle/v8.10.0/gradle/wrapper/gradle-wrapper.jar
+          sha256sum acttest-valid/gradle/wrapper/gradle-wrapper.jar
+      - id: action
+        uses: .
+        with:
+          allow-checksums: ${{ steps.setup.outputs.sums }}
+      - name: Assert no failed wrapper reported
+        env:
+          FAILED: ${{ steps.action.outputs.failed-wrapper }}
+        run: |
+          echo "failed-wrapper: '$FAILED'"
+          if [ -n "$FAILED" ]; then
+            echo "FAIL: expected genuine wrapper to pass validation"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Cleanup
+        if: always()
+        run: rm -rf "$GITHUB_WORKSPACE"/acttest-*

@@ -1,0 +1,52 @@
+name: Test include projects and configurations
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure a JDK is available
+        run: |
+          if command -v java >/dev/null 2>&1; then
+            java -version
+            exit 0
+          fi
+          case "$(uname -m)" in
+            x86_64|amd64) ARCH=x64 ;;
+            aarch64|arm64) ARCH=aarch64 ;;
+            *) echo "unsupported arch $(uname -m)"; exit 1 ;;
+          esac
+          mkdir -p /tmp/jdk
+          curl -sSfL "https://api.adoptium.net/v3/binary/latest/17/ga/linux/${ARCH}/jdk/hotspot/normal/eclipse" -o /tmp/jdk.tar.gz
+          tar -xzf /tmp/jdk.tar.gz -C /tmp/jdk --strip-components=1
+          echo "JAVA_HOME=/tmp/jdk" >> "$GITHUB_ENV"
+          echo "/tmp/jdk/bin" >> "$GITHUB_PATH"
+          /tmp/jdk/bin/java -version
+      - id: action
+        uses: .
+        with:
+          gradle-version: '8.10.2'
+          build-root-directory: tests/fixtures/gradle-project
+          dependency-graph: generate-and-submit
+          dependency-graph-continue-on-failure: 'true'
+          dependency-graph-report-dir: dg-reports-include
+          dependency-graph-include-projects: '.*'
+          dependency-graph-include-configurations: '.*Classpath'
+          cache-disabled: 'true'
+          add-job-summary: never
+      - name: Assert included dependencies present
+        run: |
+          ls -la "$GITHUB_WORKSPACE/dg-reports-include" || true
+          FILE="$(find "$GITHUB_WORKSPACE/dg-reports-include" -name '*.json' 2>/dev/null | head -n1)"
+          if [ -z "$FILE" ]; then
+            echo "FAIL: no dependency graph JSON generated"
+            exit 1
+          fi
+          echo "graph file: $FILE"
+          if ! grep -q 'commons-lang3' "$FILE"; then
+            echo "FAIL: commons-lang3 should be included"
+            cat "$FILE"
+            exit 1
+          fi
+          echo "PASS"

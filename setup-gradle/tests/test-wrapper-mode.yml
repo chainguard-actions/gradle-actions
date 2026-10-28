@@ -1,0 +1,56 @@
+name: Test wrapper mode (no gradle-version)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install a JDK (setup-gradle requires java on PATH)
+        run: |
+          set -e
+          if command -v java >/dev/null 2>&1; then
+            echo "java already present"; java -version; exit 0
+          fi
+          case "$(uname -m)" in
+            x86_64|amd64) ARCH=x64 ;;
+            aarch64|arm64) ARCH=aarch64 ;;
+            *) echo "unsupported arch $(uname -m)"; exit 1 ;;
+          esac
+          DEST="$RUNNER_TEMP/jdk17"
+          mkdir -p "$DEST"
+          curl -fsSL -o "$RUNNER_TEMP/jdk.tar.gz" \
+            "https://api.adoptium.net/v3/binary/latest/17/ga/linux/${ARCH}/jdk/hotspot/normal/eclipse"
+          tar -xzf "$RUNNER_TEMP/jdk.tar.gz" -C "$DEST" --strip-components=1
+          "$DEST/bin/java" -version
+          echo "JAVA_HOME=$DEST" >> "$GITHUB_ENV"
+          echo "$DEST/bin" >> "$GITHUB_PATH"
+      - id: action
+        uses: .
+        with:
+          cache-disabled: 'true'
+          validate-wrappers: 'false'
+      - name: Assert action succeeded without installing a specific version
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ACTUAL: ${{ steps.action.outputs.gradle-version }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "gradle-version output: '$ACTUAL'"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected success"
+            exit 1
+          fi
+          if [ -n "$ACTUAL" ]; then
+            echo "FAIL: no gradle-version requested, but output is '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert setup-gradle env was exported
+        run: |
+          echo "GRADLE_ACTION_ID=$GRADLE_ACTION_ID"
+          if [ -z "$GRADLE_ACTION_ID" ]; then
+            echo "FAIL: GRADLE_ACTION_ID not exported"
+            exit 1
+          fi
+          echo "PASS"
